@@ -343,3 +343,29 @@ if config["foresight"] == "myopic":
     # The new rule also needs to override `add_brownfield` instead of
     # `add_existing_baseyear` for myopic years
     ruleorder: add_existing_baseyear_at > add_brownfield
+
+
+# build_industrial_production_per_country: this is a plain rule
+# reusing build_industrial_production_per_country to scale historic
+# industrial production for configured countries
+rule modify_historic_industrial_demand:
+    input:
+        **rules.build_industrial_production_per_country.input,
+    output:
+        **rules.build_industrial_production_per_country.output,
+    log:
+        logs("modify_historic_industrial_demand.log"),
+    benchmark:
+        benchmarks("modify_historic_industrial_demand")
+    threads: 8
+    resources:
+        mem_mb=8000,
+    params:
+        **rules.build_industrial_production_per_country.params,
+    message:
+        "Building industrial production statistics per country, scaling historic output for configured countries"
+    script:
+        scripts("pypsa-at/modify_historic_industrial_demand.py")
+
+
+ruleorder: modify_historic_industrial_demand > build_industrial_production_per_country

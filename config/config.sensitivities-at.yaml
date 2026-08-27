@@ -1,9 +1,10 @@
-# Basisszenario für PyPSA-AT mit Anpassungen des KN2045_Mix Szenarios aus PyPSA-DE with
-#   * custom administrative clustering für Austrian regions
-#   * calibrations
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
 
 run:
-  prefix: electricity-load-clipping
+  prefix: industrial-demand-sensitivities
   name:
   - AT_KN2040
   scenarios:
@@ -56,7 +57,7 @@ clustering:
     GB: 1 # +1 Northern Ireland
     IT: 1 # +2 Sicily, Sardinia
   temporal:
-    resolution_sector: 24H
+    resolution_sector: 24
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
@@ -70,12 +71,13 @@ existing_capacities:
                         # finer spatial resolution of PyPSA-AT
 
 sector:
-  v2g: true
+  v2g: false
   solar_thermal: true
   biomass_transport: true
   regional_methanol_demand: true
   gas_network: true
   gas_network_connectivity_upgrade: 1
+  regional_coal_demand: true
   electrobiofuels: true
   biosng: true
   biosng_cc: true
@@ -174,6 +176,39 @@ industry:
     2045: 1.0
     2050: 1.0
 
+  # AT-owned normalized temporal demand profiles (see mods/demand/industrial_demand.py).
+  demand_profiles:
+    enable: true
+    carrier_mapping:
+      elec: industry electricity
+
+  annual_demand_overrides:
+    enable: true
+    target_years: [2025] # years to overwrite
+    source_years:
+      2025: 2024  # mapping from target years to years in NEA data
+    source_category: Produzierender Bereich # include only industrial production for now
+
+  # AT-owned: scale historical JRC-IDEES/Eurostat industry output per country
+  # (see scripts/build_industrial_production_per_country.py)
+  manipulate_output_historical: true
+  manipulate_output_historical_scale_factor:
+    AT: 1.0
+
+demand:
+  carrier_to_load_mapping:
+    industry:
+      electricity: industry electricity
+      solid biomass: solid biomass for industry
+      methane: gas for industry
+      hydrogen: H2 for industry
+      low-temperature heat: low-temperature heat for industry
+      naphtha: naphtha for industry
+      coal: coal for industry
+      coke: coal for industry
+      methanol: industry methanol
+      ammonia: NH3
+
 data:
   osm:
     source: archive
@@ -219,9 +254,23 @@ solving:
             2030: 1
             2040: 1
             2050: 1
+    limits_volume_min:
+      # in TWh/a Quelle EAG + https://energie.gv.at/energiewende/wie-ist-der-stand-zur-erneuerbaren-stromerzeugung-in-den-bundeslaendern
+      solar:
+        AT:
+          2030: 14
+      wind:
+        AT:
+          2030: 17
+      hydro:
+        AT:
+          2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+      biomass:
+        AT:
+          2030: 5.6
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: highs
+    options: highs-default
   solver_options:
     # https://ergo-code.github.io/HiGHS/dev/options/definitions/
     highs-default:
@@ -323,3 +372,14 @@ mods:
   trajectories:
     apply_trajectories: true
     tol: 0.1  # slack applied to upper/lower capacity bounds (MW / MWh)
+
+  # Scales loads by name to a yearly total
+  demand:
+    electricity:
+      AT:
+        # 40 as a first guess for Energiebilanz Statistik Austria = 62.7 - NEA Industry sector - NEA heat (Raumklima u. Warmwasser)
+        2020: 40  # TWh
+        2030: 40  # TWh
+        2040: 40  # TWh
+        2050: 40  # TWh
+

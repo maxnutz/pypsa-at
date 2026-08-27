@@ -14,6 +14,9 @@ from mods.constraints.tyndp import (
     constraint_ntc_flow_limits,
 )
 from mods.demand.annual import apply_annual_demand_overrides
+from mods.demand.historic_industrial_demand import (
+    apply_historic_industrial_demand_scaling,
+)
 from mods.demand.industrial_demand import apply_industrial_demand_profiles
 from mods.network.common import (
     modify_prenetwork,
@@ -25,6 +28,7 @@ __all__ = [
     "TYNDP_TO_PYPSA_LOCATION_TRANSMISSION",
     "apply_custom_clustering",
     "apply_annual_demand_overrides",
+    "apply_historic_industrial_demand_scaling",
     "apply_industrial_demand_profiles",
     "constraint_combined_solar_trajectories",
     "constraint_national_co2_budgets",
