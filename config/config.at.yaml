@@ -4,7 +4,7 @@
 # For license information, see the LICENSE.txt file in the project root.
 
 run:
-  prefix: road-transport-demand
+  prefix: future-road-transport-demand
   name:
   - AT_KN2040
   scenarios:
@@ -88,6 +88,9 @@ sector:
   cluster_heat_buses: true
   hydrogen_turbines: false  # PyPSA-AT uses the PyPSA-DE implementation in electricity.H2_plants instead
   heat_demand_scenario: WEM  # WEM or Transition Austrian heat demand heatmaps
+  land_transport_ice_share:
+    2050: 0.001 # Floor so `land transport oil` loads still exist at 2050 to be rescaled by
+  # mods/demand/transport.py
   methanol:
     regional_methanol_demand: true
     methanol_reforming: true
@@ -207,6 +210,9 @@ demand:
       ammonia: NH3
   transport:
     use_nea_demand: true
+    netzero_technology_shares:
+      enable: true
+      scenario: "High Demand"  # or "Low Demand"
   heat:
     apply_at_demand: true
 
@@ -229,6 +235,9 @@ data:
   heat_demand_at:
     source: primary
     version: v1
+  netzero2040-scenarios: # land transport scenarios from netzero project
+    source: primary
+    version: "2024"
 
 pypsa_eur:
   StorageUnit: []
