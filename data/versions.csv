@@ -116,6 +116,7 @@ natura,2025-08-15,archive,latest supported,2026-01-13,,https://data.pypsa.org/wo
 nea-at,latest,primary,latest supported,2026-07-28,Statistik Austria Nutzenergieanalyse (NEA) per-Bundesland ODS files,https://www.statistik.at/fileadmin/pages/103
 neso_electricity_demand,unknown,build,latest supported,2026-02-02,,https://www.neso.energy/data-portal/historic-demand-data
 neso_electricity_demand,2026-02-02,archive,latest supported,2026-02-03,,https://data.pypsa.org/workflows/eur/neso_electricity_demand/2026-02-02/electricity_demand_neso_raw.csv
+netzero2040-scenarios,2024,primary,latest supported,2026-09-02,"NetZero2040 (Zenodo 14051038) IAMC scenario data for Austrian passenger car stock",https://zenodo.org/records/14051038/files/netzero2040-data-repo-revisions.zip
 nitrogen_statistics,2023,primary,latest supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2023-nitro-ERT.xlsx
 nitrogen_statistics,2023,archive,latest supported,2026-02-26,,https://data.pypsa.org/workflows/eur/nitrogen_statistics/2023/myb1-2023-nitro-ERT.xlsx
 nitrogen_statistics,2022,primary,supported,2025-12-02,,https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx

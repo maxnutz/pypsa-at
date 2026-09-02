@@ -140,6 +140,31 @@ if STATISTIK_AT_REGIONS["source"] in ["primary", "archive"]:
             copy2(input["ods"], output["ods"])
 
 
+if NETZERO2040_SCENARIOS["source"] == "primary":
+
+    rule retrieve_netzero2040_scenarios:
+        input:
+            zip_file=storage(NETZERO2040_SCENARIOS["url"]),
+        output:
+            xlsx=f"{NETZERO2040_SCENARIOS['folder']}/netzero2040-times-pyam.xlsx",
+        log:
+            logs("retrieve_netzero2040_scenarios.log"),
+        retries: 2
+        message:
+            "Retrieving NetZero2040 Zenodo scenario data"
+        run:
+            output_folder = Path(output["xlsx"]).parent
+            unpack_folder = output_folder / "netzero2040-unpacked"
+            unpack_archive(input["zip_file"], unpack_folder)
+            copy2(
+                unpack_folder
+                / "netzero2040-data-repo-revisions"
+                / "netzero2040-times-pyam.xlsx",
+                output["xlsx"],
+            )
+            rmtree(unpack_folder)
+
+
 rule retrieve_heat_demand_at:
     input:
         tif=storage(f"{HEAT_DEMAND_DATASET['url']}/{{heatmap_file}}"),
