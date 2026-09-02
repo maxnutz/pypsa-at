@@ -341,6 +341,40 @@ use rule build_transport_demand as build_transport_demand_at with:
         benchmarks("build_transport_demand/s_{clusters}_at")
 
 
+# AT-owned Austrian road-transport technology shares (BEV/ICE/fuel-cell) and
+# absolute passenger-car stock from the NetZero2040 Zenodo scenario -- see
+# mods/demand/transport.py for the post-hoc network rescale that consumes
+# this table. Gated behind the enable flag so the rule (and the Zenodo
+# retrieval it depends on) is only defined when opted in.
+if (
+    config.get("demand", {})
+    .get("transport", {})
+    .get("netzero_technology_shares", {})
+    .get("enable", False)
+):
+
+    rule build_transport_technology_shares_at:
+        input:
+            netzero2040_scenarios=rules.retrieve_netzero2040_scenarios.output["xlsx"],
+        output:
+            transport_technology_shares=resources("transport_technology_shares_at.csv"),
+        log:
+            logs("build_transport_technology_shares_at.log"),
+        benchmark:
+            benchmarks("build_transport_technology_shares_at")
+        threads: 1
+        resources:
+            mem_mb=1000,
+        params:
+            scenario=config_provider(
+                "demand", "transport", "netzero_technology_shares", "scenario"
+            ),
+        message:
+            "Building Austrian road transport technology shares from NetZero2040 scenario data"
+        script:
+            scripts("pypsa-at/build_transport_technology_shares_at.py")
+
+
 rule patch_transport_demand_at:
     input:
         transport_demand=resources("transport_demand_s_{clusters}_at_unpatched.csv"),
