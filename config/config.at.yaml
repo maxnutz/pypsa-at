@@ -226,6 +226,9 @@ data:
   nea-at:
     source: primary
     version: latest
+  anlagenregister:
+    source: archive
+    version: latest
   kfz-bestand-at:
     source: primary
     version: "2025"
@@ -235,6 +238,9 @@ data:
   heat_demand_at:
     source: primary
     version: v1
+  ffe_industry_load_profiles:
+    source: primary
+    version: latest
   netzero2040-scenarios: # land transport scenarios from netzero project
     source: primary
     version: "2024"
