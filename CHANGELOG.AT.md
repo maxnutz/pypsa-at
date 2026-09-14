@@ -8,6 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Planned]
 
 ### Added
+- Austrian road-transport technology shares (BEV/ICE/fuel-cell) and BEV charger sizing from the NetZero2040 Zenodo scenario, replacing the generic PyPSA-DE trajectory for Austrian nodes
 - Differentiation of open- and closed-loop PHS, reservoirs with and without inflows; improved Austrian hydro inflow time series
 - Carbon cycle model coupling for improved biomass sector accuracy
 - Optimised production paths for industry sub-sectors, replacing exogenous energy modal splits
