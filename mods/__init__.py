@@ -15,6 +15,7 @@ from mods.constraints.tyndp import (
 )
 from mods.demand.annual import apply_annual_demand_overrides
 from mods.demand.industrial_demand import apply_industrial_demand_profiles
+from mods.demand.transport import apply_transport_technology_shares
 from mods.network.common import (
     modify_prenetwork,
     prepare_sector_network,
@@ -26,6 +27,7 @@ __all__ = [
     "apply_custom_clustering",
     "apply_annual_demand_overrides",
     "apply_industrial_demand_profiles",
+    "apply_transport_technology_shares",
     "constraint_combined_solar_trajectories",
     "constraint_national_co2_budgets",
     "constraint_net_zero_electricity",

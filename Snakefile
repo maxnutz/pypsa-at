@@ -84,6 +84,7 @@ NEA_AT = dataset_version("nea-at")
 ANLAGENREGISTER = dataset_version("anlagenregister")
 KFZ_BESTAND_AT = dataset_version("kfz-bestand-at")
 STATISTIK_AT_REGIONS = dataset_version("statistik-at-regions")
+NETZERO2040_SCENARIOS = dataset_version("netzero2040-scenarios")
 HEAT_DEMAND_DATASET = dataset_version("heat_demand_at")
 FFE_INDUSTRY_LOAD_PROFILES = dataset_version("ffe_industry_load_profiles")
 HEAT_DEMAND_DATASETS = {

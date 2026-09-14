@@ -13,6 +13,7 @@ from mods.demand.annual import apply_annual_demand_overrides
 from mods.demand.electricity import BASE_LOAD_CARRIERS, base_load_load_splitting
 from mods.demand.heat_demand import apply_heat_demand
 from mods.demand.industrial_demand import apply_industrial_demand_profiles
+from mods.demand.transport import apply_transport_technology_shares
 from mods.network.electricity import apply_tyndp_transmission_lower_bounds
 from mods.network.gas import (
     block_russian_gas_imports,
@@ -104,6 +105,7 @@ def modify_prenetwork(n: pypsa.Network, snakemake: Snakemake) -> None:
     apply_tyndp_transmission_lower_bounds(n, snakemake)
     add_h2_imports(n, snakemake)
     apply_heat_demand(n, snakemake)
+    apply_transport_technology_shares(n, snakemake)
 
     # Apply Load clipping just before the solve step
     clip_negative_loads_for_edge_cases(n, snakemake)

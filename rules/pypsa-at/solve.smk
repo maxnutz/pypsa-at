@@ -25,6 +25,11 @@ RESOURCE_META = {
         resources("transport_data_{clusters}_at.csv"),
         [],
     ),
+    "transport_technology_shares_at": branch(
+        config_provider("demand", "transport", "netzero_technology_shares", "enable"),
+        resources("transport_technology_shares_at.csv"),
+        [],
+    ),
 }
 INPUT_META = ["energy_totals", "trajectories"]
 

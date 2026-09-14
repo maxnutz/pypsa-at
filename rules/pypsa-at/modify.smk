@@ -230,8 +230,18 @@ use rule modify_prenetwork as modify_prenetwork_at with:
             resources("heat_demand_nea_at_{clusters}.csv"),
             [],
         ),
+        transport_technology_shares=branch(
+            config_provider(
+                "demand", "transport", "netzero_technology_shares", "enable"
+            ),
+            resources("transport_technology_shares_at.csv"),
+            [],
+        ),
     params:
         **rules.modify_prenetwork.params,
+        netzero_technology_shares_enable=config_provider(
+            "demand", "transport", "netzero_technology_shares", "enable"
+        ),
         klien_potential_limits_technologies=config_provider(
             "mods", "klien_potential_limits", "technologies"
         ),
