@@ -29,6 +29,11 @@ def apply_transport_technology_shares(n: pypsa.Network, snakemake: Snakemake) ->
     from ``"DE"`` to ``"AT"`` nodes and from the Ariadne database to the
     NetZero2040 Zenodo scenario.
 
+    The model's base year (the first configured planning horizon) is skipped:
+    ``patch_transport_demand_at.py`` already overrides that horizon's
+    transport demand with Statistik Austria Nutzenergieanalyse data. This
+    year is then used as common basis for demand change.
+
     Parameters
     ----------
     n
@@ -42,11 +47,16 @@ def apply_transport_technology_shares(n: pypsa.Network, snakemake: Snakemake) ->
     :
         Updates the network in place.
     """
+
     if not snakemake.params.netzero_technology_shares_enable:
         return
 
-    stock = pd.read_csv(snakemake.input.transport_technology_shares, index_col=0)
     investment_year = int(snakemake.wildcards.planning_horizons)
+    base_year = snakemake.params.planning_horizons[0]
+    if investment_year == base_year:
+        return
+
+    stock = pd.read_csv(snakemake.input.transport_technology_shares, index_col=0)
     year_col = str(investment_year)
 
     _rescale_loads(n, stock, year_col, investment_year, snakemake.params.sector)
@@ -60,10 +70,11 @@ def _rescale_loads(n, stock, year_col, investment_year, sector_params):
     ``old_share`` is the generic config share the network was already built
     with (via ``add_land_transport``) for this investment year;
     ``new_share`` is the NetZero2040-prescribed share. Because the NetZero2040
-    shares are expressed against the same 2023 baseline as the absolute car
-    counts, this ratio simultaneously captures technology-mix shift and
-    overall demand growth without needing to separately re-derive total
-    driven-km demand.
+    shares are expressed against the same base-year baseline (the model's
+    first planning horizon, ``common_basis_year`` in
+    ``build_transport_technology_shares_at.py``) as the absolute car counts,
+    this ratio simultaneously captures technology-mix shift and overall
+    demand growth.
 
     Parameters
     ----------
@@ -90,6 +101,7 @@ def _rescale_loads(n, stock, year_col, investment_year, sector_params):
         wants nonzero -- there are then no matching Loads in the network to
         rescale.
     """
+
     new_shares = {
         engine: stock.loc[f"{engine}_share", year_col]
         for engine in LOAD_CARRIER_TO_ENGINE.values()

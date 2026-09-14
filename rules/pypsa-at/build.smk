@@ -369,6 +369,7 @@ if (
             scenario=config_provider(
                 "demand", "transport", "netzero_technology_shares", "scenario"
             ),
+            planning_horizons=config_provider("scenario", "planning_horizons"),
         message:
             "Building Austrian road transport technology shares from NetZero2040 scenario data"
         script:
