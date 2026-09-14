@@ -5,20 +5,99 @@
 """
 Unit tests for the NetZero2040 transport technology share rescale.
 
-Tests operate on a small synthetic network rather than a solved ``nc``
-network: the Load rescale multiplies existing p_set by a ratio, and upstream
-``add_land_transport`` applies per-engine efficiency and temperature
-corrections when it first builds those Loads, so the pre-rescale energy
-split is not recoverable from a solved network's final state alone. Testing
-``_rescale_loads``/``_rescale_bev_chargers`` directly keeps the assertions
-exact.
+Tests operate on a small synthetic network: the Load rescale multiplies
+xisting p_set by a ratio, and upstream ``add_land_transport`` applies
+per-engine efficiency and temperature corrections when it first builds those
+Loads, so the pre-rescale energy split is not recoverable from a solved
+network's final state alone. Testing ``_rescale_loads``/``_rescale_bev_chargers``
+directly keeps the assertions exact.
 """
+
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pandas as pd
 import pypsa
 import pytest
 
-from mods.demand.transport import _rescale_bev_chargers, _rescale_loads
+from mods.demand.transport import (
+    _rescale_bev_chargers,
+    _rescale_loads,
+    apply_transport_technology_shares,
+)
+
+
+def _make_snakemake_stub(
+    tmp_path, planning_horizons, investment_year, netzero_enabled=True
+):
+    """A minimal Snakemake stand-in for ``apply_transport_technology_shares``."""
+    stock_file = tmp_path / "transport_technology_shares_at.csv"
+    pd.DataFrame(
+        {str(investment_year): [0.5, 0.5, 0.0]},
+        index=["electric_share", "ice_share", "fuel_cell_share"],
+    ).to_csv(stock_file)
+    return SimpleNamespace(
+        input=SimpleNamespace(transport_technology_shares=stock_file),
+        params=SimpleNamespace(
+            netzero_technology_shares_enable=netzero_enabled,
+            planning_horizons=planning_horizons,
+            sector={},
+            bev_charge_rate=0.011,
+        ),
+        wildcards=SimpleNamespace(planning_horizons=str(investment_year)),
+    )
+
+
+def test_apply_transport_technology_shares_skips_base_year(tmp_path):
+    """The base year is already patched from NEA data; the NetZero2040 mix must not overwrite it."""
+    n = pypsa.Network()
+    snakemake = _make_snakemake_stub(
+        tmp_path, planning_horizons=[2025, 2030, 2040], investment_year=2025
+    )
+
+    with (
+        patch("mods.demand.transport._rescale_loads") as rescale_loads,
+        patch("mods.demand.transport._rescale_bev_chargers") as rescale_bev,
+    ):
+        apply_transport_technology_shares(n, snakemake)
+
+    rescale_loads.assert_not_called()
+    rescale_bev.assert_not_called()
+
+
+def test_apply_transport_technology_shares_rescales_non_base_year(tmp_path):
+    n = pypsa.Network()
+    snakemake = _make_snakemake_stub(
+        tmp_path, planning_horizons=[2025, 2030, 2040], investment_year=2030
+    )
+
+    with (
+        patch("mods.demand.transport._rescale_loads") as rescale_loads,
+        patch("mods.demand.transport._rescale_bev_chargers") as rescale_bev,
+    ):
+        apply_transport_technology_shares(n, snakemake)
+
+    rescale_loads.assert_called_once()
+    rescale_bev.assert_called_once()
+
+
+def test_apply_transport_technology_shares_disabled_noop(tmp_path):
+    n = pypsa.Network()
+    snakemake = _make_snakemake_stub(
+        tmp_path,
+        planning_horizons=[2025, 2030],
+        investment_year=2030,
+        netzero_enabled=False,
+    )
+
+    with (
+        patch("mods.demand.transport._rescale_loads") as rescale_loads,
+        patch("mods.demand.transport._rescale_bev_chargers") as rescale_bev,
+    ):
+        apply_transport_technology_shares(n, snakemake)
+
+    rescale_loads.assert_not_called()
+    rescale_bev.assert_not_called()
 
 
 def _make_network_with_transport_loads() -> pypsa.Network:
