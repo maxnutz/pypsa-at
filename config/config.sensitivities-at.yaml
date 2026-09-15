@@ -6,14 +6,24 @@
 run:
   prefix: industrial-demand-sensitivities
   name:
-  - AT_KN2040
+  - Industry_0.6
+  - Industry_0.7
+  - Industry_0.8
+  - Industry_0.9
+  - Industry_1.0
+  - Industry_1.1
+  - Industry_1.2
+  - Industry_1.3
+  - Industry_1.4
+  - Industry_1.5
+  - Industry_1.6
   scenarios:
     enable: true
     # PyPSA-DE uses config/scenarios.automated.yaml to incorporate Ariadne project
     # specific scenario settings in model runs. PyPSA-AT uses the KN2045_Mix scenario
     # for all AT scenarios as a base. As a result, the build_scenario step is obsolete.
     # We simply use the manual file with hard coded values.
-    file: config/scenarios.manual.yaml
+    file: config/scenarios.industry-sensitivities.yaml
   shared_resources:
     policy: base #stops recalculating
     exclude:
@@ -25,6 +35,11 @@ run:
     - modify_existing_heating
     - build_custom_cost_at
     - custom_cost_at.csv
+    - industrial_production_per_country   # scaled per-scenario by industry.manipulate_output_historical_scale_factor
+    - build_industrial_production_per_country   # keep its log/benchmark wildcards consistent with the (excluded) output above
+    - modify_historic_industrial_demand   # active rule for industrial_production_per_country.csv (ruleorder over build_industrial_production_per_country)
+    - industrial_energy_demand_per_country_today   # downstream of industrial_production_per_country.csv, no scenario-varying wildcards
+    - build_industrial_energy_demand_per_country_today   # save build_industrial_energy_demand_per_country_today.log in the correct folder
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
@@ -57,7 +72,7 @@ clustering:
     GB: 1 # +1 Northern Ireland
     IT: 1 # +2 Sicily, Sardinia
   temporal:
-    resolution_sector: 24
+    resolution_sector: 365H
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
