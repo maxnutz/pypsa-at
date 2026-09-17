@@ -6,12 +6,15 @@
 run:
   prefix: biomass-at-sensitivities
   # One run per biomass availability factor applied to Austria only, defined in the
-  # scenario file below. Factors run from 0.5 to 4.0 in steps of 0.25 (15 runs).
-  # Mirrors config/config.sensitivities-biomass.yaml, which scales all modelled
-  # countries instead of Austria alone.
+  # scenario file below. Factors are 0.6, 0.7, 0.8 and 0.9 below the reference and
+  # 1.25 to 3.0 in steps of 0.25 above it (13 runs). Mirrors
+  # config/config.sensitivities-biomass.yaml, which scales all modelled countries
+  # instead of Austria alone.
   name:
-  - BIO_AT_050
-  - BIO_AT_075
+  - BIO_AT_060
+  - BIO_AT_070
+  - BIO_AT_080
+  - BIO_AT_090
   - BIO_AT_100
   - BIO_AT_125
   - BIO_AT_150
@@ -83,6 +86,27 @@ costs:
   custom_cost_fn_list:  # List is combined into one cost file, keeping only the first occurrence of each entry.
   - data/custom_costs.csv
   - data/pypsa-de/custom_costs_nep_2023.csv
+
+# --- No forced biomass combustion in the sensitivity runs ---------------------
+# Upstream splits the biomass supply into a sustainable part (ENSPRESO, phased
+# in) and an unsustainable part (today's Eurostat consumption, phased out).
+biomass:
+  share_unsustainable_use_retained:
+    2020: 0
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 1
+    2025: 1
+    2030: 1
+    2035: 1
+    2040: 1
+    2045: 1
+    2050: 1
 
 existing_capacities:
   threshold_capacity: 2 # reduce threshold capacity for all carriers to better support
@@ -332,7 +356,11 @@ mods:
   # overridden per scenario in
   # config/scenarios-sensitivities/scenarios.biomass-at-sensitivities.yaml, while
   # `factors.default` stays at 1.0 so every other modelled country keeps its
-  # unscaled potential. The carrier list is inherited from config/config.at.yaml.
+  # unscaled potential.
+  # The carrier list is inherited from config/config.at.yaml. Its three
+  # `unsustainable *` entries are no-ops here: the `biomass:` block above zeroes
+  # those columns, so only `solid biomass` and `biogas` are actually scaled --
+  # and both are pure upper bounds (e_sum_min 0).
   biomass_potential_scaling:
     enable: true
     factors:

@@ -1,7 +1,10 @@
 import marimo
 
 __generated_with = "0.23.16"
-app = marimo.App(width="medium")
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/biomass_sensitivity_analysis.slides.json",
+)
 
 
 @app.cell
@@ -21,6 +24,28 @@ def _():
     import biomass_sensitivity_helpers as bsh
 
     return bsh, mo, np, pd, px
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Biomass in PyPSA-AT
+
+    - biomass availability data: ENSPRESO
+    - years 2025 and 2030: _unsustainable solid biomass_
+      - current use is above what ENSPRESO accounts as available
+      - model forces the current use (and expected for 2030) of biomass and biofuels
+      - scaling these would force the model to use more biomass in 2025 and 2030
+    - Adaptations: remove the "unsustainable" part &rarr; reduces biomass in 2025 and 2030
+
+    |   horizon | before (forced / optional) | after (all optional) |
+    | -- | -- | -- |
+    |   2025    | 61.4 / 0.0                 | 40.6 |
+    |   2030    | 40.5 / 12.3                | 37.2 |
+    |   2040    |  0.0 / 35.7                | 35.7  (unchanged) |
+    |   2050    |  0.0 / 36.8                | 36.8  (unchanged) |
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -350,7 +375,7 @@ def _(bsh, metrics_scoped, plot_title, px):
     ].sum()
     total_use_by_year["TWh"] = total_use_by_year["value"] / 1e6
     # discrete, factor-ordered legend (one line per factor) rather than a continuous
-    # colorbar, since there are only ~15 distinct factors and each is a meaningful
+    # colorbar, since there are only ~13 distinct factors and each is a meaningful
     # scenario, not a smooth continuum
     factor_order = sorted(total_use_by_year["factor"].unique())
     total_use_by_year["factor_label"] = total_use_by_year["factor"].map(

@@ -8,121 +8,137 @@
 # Each scenario scales every biomass potential column of
 # resources/{prefix}/{scenario}/biomass_potentials_s_{clusters}_{planning_horizons}.csv
 # by one factor, applied to all modelled countries via `factors.default`.
-# Factors run from 0.5 to 4.0 in steps of 0.25; BIO_100 is the unscaled reference run.
+# Factors are 0.6, 0.7, 0.8 and 0.9 below the reference and 1.25 to 3.0 in
+# steps of 0.25 above it (13 runs); BIO_100 is the unscaled reference run.
 #
 # Run with:
 #   pixi run snakemake --configfile config/config.sensitivities-biomass.yaml -call
 #
 # The carrier list and `enable` flag are inherited from config/config.at.yaml.
+#
+# The campaign config also overrides `biomass.share_unsustainable_use_retained`
+# (0 in every year) and `biomass.share_sustainable_potential_available` (1 in
+# every year), so no biomass generator is must-run and the factor below scales a
+# genuine availability ceiling in all four horizons. See the comment above the
+# `biomass:` block in the campaign config.
+#
+# Why the campaign starts at 0.6 and not lower: `sector.biomass_transport: true`
+# builds `solid biomass transport` links along AC lines only (see
+# create_network_topology in prepare_sector_network.py), so the Nordic
+# synchronous area (DK1, FI, NO, SE), GB1 + IE and IT2 (Sardinia) are closed
+# biomass islands -- they reach the continent by HVDC only. Inside an island the
+# inelastic `solid biomass for industry` load has to be covered from the island's
+# own potential. The factor at which that stops being possible is
+#
+#   island             2025   2030   2040   2050
+#   DK1, FI, NO, SE    0.58   0.62   0.53   0.50
+#   GB1, IE            0.49   0.49   0.36   0.33
+#   IT2 (Sardinia)     0.49   0.58   0.68   0.66
+#
+# Factor 0.5 was infeasible in 2025 for exactly this reason. These thresholds
+# count the industrial load only and are therefore a lower bound on what is
+# solvable, so BIO_060 is expected to fail in 2030 (Nordics) and in 2040/2050
+# (Sardinia), and BIO_070 clears the worst case by only ~3%.
+#
+# The robust alternative is to leave the island countries at 1.0 and give
+# explicit `factors` entries for the countries under study, as
+# config/config.sensitivities-biomass-at.yaml does for Austria.
+#
 # To restrict the scaling to Austria, give a country entry alongside the default:
 #
 #   mods:
 #     biomass_potential_scaling:
 #       factors:
 #         default: 1.0
-#         AT: 0.5
+#         AT: 0.6
 
-BIO_050:
-  description: Biomass availability at 50% of the reference (factor 0.5)
+BIO_060:
+  description: Biomass availability at 60% of the reference (factor 0.6) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
-        default: 0.5
+        default: 0.6
 
-BIO_075:
-  description: Biomass availability at 75% of the reference (factor 0.75)
+BIO_070:
+  description: Biomass availability at 70% of the reference (factor 0.7) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
-        default: 0.75
+        default: 0.7
+
+BIO_080:
+  description: Biomass availability at 80% of the reference (factor 0.8) in all modelled countries
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 0.8
+
+BIO_090:
+  description: Biomass availability at 90% of the reference (factor 0.9) in all modelled countries
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 0.9
 
 BIO_100:
-  description: Reference run, unscaled ENSPRESO/Eurostat potentials (factor 1.0)
+  description: Reference run, unscaled biomass potential (factor 1.0)
   mods:
     biomass_potential_scaling:
       factors:
-        default: 1.0
+        default: 1
 
 BIO_125:
-  description: Biomass availability at 125% of the reference (factor 1.25)
+  description: Biomass availability at 125% of the reference (factor 1.25) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 1.25
 
 BIO_150:
-  description: Biomass availability at 150% of the reference (factor 1.5)
+  description: Biomass availability at 150% of the reference (factor 1.5) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 1.5
 
 BIO_175:
-  description: Biomass availability at 175% of the reference (factor 1.75)
+  description: Biomass availability at 175% of the reference (factor 1.75) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 1.75
 
 BIO_200:
-  description: Biomass availability at 200% of the reference (factor 2.0)
+  description: Biomass availability at 200% of the reference (factor 2) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
-        default: 2.0
+        default: 2
 
 BIO_225:
-  description: Biomass availability at 225% of the reference (factor 2.25)
+  description: Biomass availability at 225% of the reference (factor 2.25) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 2.25
 
 BIO_250:
-  description: Biomass availability at 250% of the reference (factor 2.5)
+  description: Biomass availability at 250% of the reference (factor 2.5) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 2.5
 
 BIO_275:
-  description: Biomass availability at 275% of the reference (factor 2.75)
+  description: Biomass availability at 275% of the reference (factor 2.75) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
         default: 2.75
 
 BIO_300:
-  description: Biomass availability at 300% of the reference (factor 3.0)
+  description: Biomass availability at 300% of the reference (factor 3) in all modelled countries
   mods:
     biomass_potential_scaling:
       factors:
-        default: 3.0
-
-BIO_325:
-  description: Biomass availability at 325% of the reference (factor 3.25)
-  mods:
-    biomass_potential_scaling:
-      factors:
-        default: 3.25
-
-BIO_350:
-  description: Biomass availability at 350% of the reference (factor 3.5)
-  mods:
-    biomass_potential_scaling:
-      factors:
-        default: 3.5
-
-BIO_375:
-  description: Biomass availability at 375% of the reference (factor 3.75)
-  mods:
-    biomass_potential_scaling:
-      factors:
-        default: 3.75
-
-BIO_400:
-  description: Biomass availability at 400% of the reference (factor 4.0)
-  mods:
-    biomass_potential_scaling:
-      factors:
-        default: 4.0
+        default: 3
