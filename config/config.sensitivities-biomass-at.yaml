@@ -4,16 +4,30 @@
 # For license information, see the LICENSE.txt file in the project root.
 
 run:
-  prefix: road-transport-demand
+  prefix: biomass-at-sensitivities
+  # One run per biomass availability factor applied to Austria only, defined in the
+  # scenario file below. Factors run from 0.5 to 4.0 in steps of 0.25 (15 runs).
+  # Mirrors config/config.sensitivities-biomass.yaml, which scales all modelled
+  # countries instead of Austria alone.
   name:
-  - AT_KN2040
+  - BIO_AT_050
+  - BIO_AT_075
+  - BIO_AT_100
+  - BIO_AT_125
+  - BIO_AT_150
+  - BIO_AT_175
+  - BIO_AT_200
+  - BIO_AT_225
+  - BIO_AT_250
+  - BIO_AT_275
+  - BIO_AT_300
   scenarios:
     enable: true
     # PyPSA-DE uses config/scenarios.automated.yaml to incorporate Ariadne project
     # specific scenario settings in model runs. PyPSA-AT uses the KN2045_Mix scenario
     # for all AT scenarios as a base. As a result, the build_scenario step is obsolete.
     # We simply use the manual file with hard coded values.
-    file: config/scenarios.manual.yaml
+    file: config/scenarios-sensitivities/scenarios.biomass-at-sensitivities.yaml
   shared_resources:
     policy: base #stops recalculating
     exclude:
@@ -51,12 +65,16 @@ clustering:
   mode: administrative
   administrative:
     level: 0 # countries
-    AT: 3 # 10 regions if NUTS 2, 35 if NUTS 3
+    AT: 2 # AT10: 10 regions at NUTS2 (must match mods.modify_nuts3_shapes)
     DE: 3 # NUTS3 as a proxy for 5 regions
     DK: 1 # +1 Sjaelland
     GB: 1 # +1 Northern Ireland
     IT: 1 # +2 Sicily, Sardinia
   temporal:
+    # Very low temporal resolution: 365-hour blocks, i.e. 24 snapshots per year.
+    # Sensitivity runs compare scenarios against each other, so throughput beats
+    # intra-year detail. Must be a string ending in "h"/"seg"/"sn" — a bare
+    # integer silently produces no snapshot weightings (scripts/time_aggregation.py).
     resolution_sector: 365H
 
 costs:
@@ -87,7 +105,6 @@ sector:
   municipal_solid_waste: true
   cluster_heat_buses: true
   hydrogen_turbines: false  # PyPSA-AT uses the PyPSA-DE implementation in electricity.H2_plants instead
-  heat_demand_scenario: WEM  # WEM or Transition Austrian heat demand heatmaps
   methanol:
     regional_methanol_demand: true
     methanol_reforming: true
@@ -190,9 +207,13 @@ industry:
       2025: 2024  # mapping from target years to years in NEA data
     source_category: Produzierender Bereich # include only industrial production for now
 
+  # AT-owned: scale historical JRC-IDEES/Eurostat industry output per country
+  # (see scripts/build_industrial_production_per_country.py)
+  manipulate_output_historical: true
+  manipulate_output_historical_scale_factor:
+    AT: 1.0
+
 demand:
-  source_years:
-    2025: 2024  # mapping from target years to years in NEA data
   carrier_to_load_mapping:
     industry:
       electricity: industry electricity
@@ -205,10 +226,6 @@ demand:
       coke: coal for industry
       methanol: industry methanol
       ammonia: NH3
-  transport:
-    use_nea_demand: true
-  heat:
-    apply_at_demand: true
 
 data:
   osm:
@@ -220,15 +237,6 @@ data:
   nea-at:
     source: primary
     version: latest
-  kfz-bestand-at:
-    source: primary
-    version: "2025"
-  statistik-at-regions:
-    source: primary
-    version: "2025"
-  heat_demand_at:
-    source: primary
-    version: v1
 
 pypsa_eur:
   StorageUnit: []
@@ -255,29 +263,50 @@ solving:
         2040: 0.09
         2045: -0.05
         2050: -0.048
+    # --- EAG targets disabled for the biomass sensitivity runs ----------------
+    # The EAG expansion goals pin the Austrian renewable build-out to fixed
+    # policy values, and the biomass volume floor pins biomass use itself. Both
+    # mask the system response this sensitivity is meant to measure, so they are
+    # switched off here.
+    #
+    # NOTE: commenting the values out is not enough to disable them. This file is
+    # merged *on top of* config/config.at.yaml via `--configfile`, and snakemake's
+    # `update_config` merges dictionaries recursively -- a key that is absent (or
+    # set to an empty dict) keeps the config.at.yaml value. The targets therefore
+    # have to be overridden with 0 instead of removed. A limit of 0 leaves the
+    # constraint trivially satisfied (>= 0 GW / >= 0 TWh); see
+    # mods/constraints/production.py and
+    # scripts/pypsa-de/additional_functionality.py::add_capacity_limits.
     limits_capacity_min:  # in GW
       Link:
         H2 Electrolysis:
           AT:
             # EAG Ausbauziel: 1 GW Elektrolyseleistung in MW_el in AT
             # limit set for p_nom_opt, which already is for MW_el at bus0
-            2030: 1
-            2040: 1
-            2050: 1
+            # 2030: 1
+            # 2040: 1
+            # 2050: 1
+            2030: 0
+            2040: 0
+            2050: 0
     limits_volume_min:
       # in TWh/a Quelle EAG + https://energie.gv.at/energiewende/wie-ist-der-stand-zur-erneuerbaren-stromerzeugung-in-den-bundeslaendern
       solar:
         AT:
-          2030: 14
+          # 2030: 14
+          2030: 0
       wind:
         AT:
-          2030: 17
+          # 2030: 17
+          2030: 0
       hydro:
         AT:
-          2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+          # 2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+          2030: 0
       biomass:
         AT:
-          2030: 5.6
+          # 2030: 5.6
+          2030: 0
   solver:
     name: gurobi
     options: gurobi-default
@@ -297,7 +326,18 @@ solving:
 mods:
 
   # AT10 or NUTS3 administrative clustering
-  modify_nuts3_shapes: AT35DE5
+  modify_nuts3_shapes: AT10DE5
+
+  # Biomass availability sensitivity, restricted to Austria: `factors.AT` is
+  # overridden per scenario in
+  # config/scenarios-sensitivities/scenarios.biomass-at-sensitivities.yaml, while
+  # `factors.default` stays at 1.0 so every other modelled country keeps its
+  # unscaled potential. The carrier list is inherited from config/config.at.yaml.
+  biomass_potential_scaling:
+    enable: true
+    factors:
+      default: 1.0
+      AT: 1.0
 
   # use improved Austrian gas grid capacities
   # provided by AGGM experts
@@ -365,25 +405,6 @@ mods:
   tyndp_cross_border_flow_limits:
     enable: true
 
-  # Scale regional biomass potentials to probe the sensitivity of the system to
-  # biomass availability. Applied to biomass_potentials_s_*.csv after
-  # build_biomass_potentials; a factor of 1.0 reproduces the unscaled
-  # ENSPRESO/Eurostat potentials. See docs-at/explanations/renewable-energy-potentials/
-  # biomass-potentials.md and config/scenarios-sensitivities/.
-  biomass_potential_scaling:
-    enable: true
-    carriers:                        # columns of biomass_potentials_s_*.csv to scale
-    - solid biomass                  # upper bound (e_sum_min 0)
-    - biogas                         # upper bound (e_sum_min 0)
-    # municipal solid waste is deliberately excluded: it is mixed waste (partly
-    # non-biogenic) incinerated as waste-to-energy, not a biomass feedstock whose
-    # availability this sensitivity is meant to probe.
-    - unsustainable solid biomass    # must-run (e_sum_min == e_sum_max)
-    - unsustainable biogas           # must-run (e_sum_min == e_sum_max)
-    - unsustainable bioliquids       # must-run (e_sum_min == e_sum_max)
-    factors:                         # country code -> multiplier
-      default: 1.0                   # applied to every country without its own entry
-
   # enforce TYNDP NTC capacities as expansion lower bounds
   tyndp_lower_bounds:
     enable: true
@@ -411,3 +432,4 @@ mods:
         2030: 40  # TWh
         2040: 40  # TWh
         2050: 40  # TWh
+

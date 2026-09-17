@@ -1,0 +1,128 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+#
+# Biomass availability sensitivity campaign.
+#
+# Each scenario scales every biomass potential column of
+# resources/{prefix}/{scenario}/biomass_potentials_s_{clusters}_{planning_horizons}.csv
+# by one factor, applied to all modelled countries via `factors.default`.
+# Factors run from 0.5 to 4.0 in steps of 0.25; BIO_100 is the unscaled reference run.
+#
+# Run with:
+#   pixi run snakemake --configfile config/config.sensitivities-biomass.yaml -call
+#
+# The carrier list and `enable` flag are inherited from config/config.at.yaml.
+# To restrict the scaling to Austria, give a country entry alongside the default:
+#
+#   mods:
+#     biomass_potential_scaling:
+#       factors:
+#         default: 1.0
+#         AT: 0.5
+
+BIO_050:
+  description: Biomass availability at 50% of the reference (factor 0.5)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 0.5
+
+BIO_075:
+  description: Biomass availability at 75% of the reference (factor 0.75)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 0.75
+
+BIO_100:
+  description: Reference run, unscaled ENSPRESO/Eurostat potentials (factor 1.0)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+
+BIO_125:
+  description: Biomass availability at 125% of the reference (factor 1.25)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.25
+
+BIO_150:
+  description: Biomass availability at 150% of the reference (factor 1.5)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.5
+
+BIO_175:
+  description: Biomass availability at 175% of the reference (factor 1.75)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.75
+
+BIO_200:
+  description: Biomass availability at 200% of the reference (factor 2.0)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 2.0
+
+BIO_225:
+  description: Biomass availability at 225% of the reference (factor 2.25)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 2.25
+
+BIO_250:
+  description: Biomass availability at 250% of the reference (factor 2.5)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 2.5
+
+BIO_275:
+  description: Biomass availability at 275% of the reference (factor 2.75)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 2.75
+
+BIO_300:
+  description: Biomass availability at 300% of the reference (factor 3.0)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 3.0
+
+BIO_325:
+  description: Biomass availability at 325% of the reference (factor 3.25)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 3.25
+
+BIO_350:
+  description: Biomass availability at 350% of the reference (factor 3.5)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 3.5
+
+BIO_375:
+  description: Biomass availability at 375% of the reference (factor 3.75)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 3.75
+
+BIO_400:
+  description: Biomass availability at 400% of the reference (factor 4.0)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 4.0

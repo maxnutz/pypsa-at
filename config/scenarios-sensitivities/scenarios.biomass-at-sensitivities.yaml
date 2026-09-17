@@ -1,0 +1,139 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+#
+# Biomass availability sensitivity campaign, restricted to Austria.
+#
+# Each scenario scales the biomass potential columns of
+# resources/{prefix}/{scenario}/biomass_potentials_s_{clusters}_{planning_horizons}.csv
+# for Austrian regions only (factors.AT); every other modelled country keeps its
+# unscaled potential (factors.default: 1.0). Factors run from 0.5 to 4.0 in steps
+# of 0.25; BIO_AT_100 is the unscaled reference run. Mirrors
+# scenarios.biomass-sensitivities.yaml, which scales all modelled countries
+# instead of Austria alone.
+#
+# Run with:
+#   pixi run snakemake --configfile config/config.sensitivities-biomass-at.yaml -call
+#
+# The carrier list and `enable` flag are inherited from config/config.at.yaml.
+
+BIO_AT_050:
+  description: Austrian biomass availability at 50% of the reference (factor 0.5); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 0.5
+
+BIO_AT_075:
+  description: Austrian biomass availability at 75% of the reference (factor 0.75); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 0.75
+
+BIO_AT_100:
+  description: Reference run, unscaled Austrian biomass potential (factor 1.0)
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 1.0
+
+BIO_AT_125:
+  description: Austrian biomass availability at 125% of the reference (factor 1.25); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 1.25
+
+BIO_AT_150:
+  description: Austrian biomass availability at 150% of the reference (factor 1.5); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 1.5
+
+BIO_AT_175:
+  description: Austrian biomass availability at 175% of the reference (factor 1.75); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 1.75
+
+BIO_AT_200:
+  description: Austrian biomass availability at 200% of the reference (factor 2.0); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 2.0
+
+BIO_AT_225:
+  description: Austrian biomass availability at 225% of the reference (factor 2.25); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 2.25
+
+BIO_AT_250:
+  description: Austrian biomass availability at 250% of the reference (factor 2.5); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 2.5
+
+BIO_AT_275:
+  description: Austrian biomass availability at 275% of the reference (factor 2.75); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 2.75
+
+BIO_AT_300:
+  description: Austrian biomass availability at 300% of the reference (factor 3.0); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 3.0
+
+BIO_AT_325:
+  description: Austrian biomass availability at 325% of the reference (factor 3.25); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 3.25
+
+BIO_AT_350:
+  description: Austrian biomass availability at 350% of the reference (factor 3.5); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 3.5
+
+BIO_AT_375:
+  description: Austrian biomass availability at 375% of the reference (factor 3.75); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 3.75
+
+BIO_AT_400:
+  description: Austrian biomass availability at 400% of the reference (factor 4.0); all other countries unscaled
+  mods:
+    biomass_potential_scaling:
+      factors:
+        default: 1.0
+        AT: 4.0

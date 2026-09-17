@@ -4,16 +4,28 @@
 # For license information, see the LICENSE.txt file in the project root.
 
 run:
-  prefix: industrial-demand-sensitivities
+  prefix: biomass-sensitivities
+  # One run per biomass availability factor, defined in the scenario file below.
+  # Factors run from 0.5 to 4.0 in steps of 0.25 (15 runs).
   name:
-  - AT_KN2040
+  - BIO_050
+  - BIO_075
+  - BIO_100
+  - BIO_125
+  - BIO_150
+  - BIO_175
+  - BIO_200
+  - BIO_225
+  - BIO_250
+  - BIO_275
+  - BIO_300
   scenarios:
     enable: true
     # PyPSA-DE uses config/scenarios.automated.yaml to incorporate Ariadne project
     # specific scenario settings in model runs. PyPSA-AT uses the KN2045_Mix scenario
     # for all AT scenarios as a base. As a result, the build_scenario step is obsolete.
     # We simply use the manual file with hard coded values.
-    file: config/scenarios.manual.yaml
+    file: config/scenarios-sensitivities/scenarios.biomass-sensitivities.yaml
   shared_resources:
     policy: base #stops recalculating
     exclude:
@@ -51,13 +63,17 @@ clustering:
   mode: administrative
   administrative:
     level: 0 # countries
-    AT: 3 # 10 regions if NUTS 2, 35 if NUTS 3
+    AT: 2 # AT10: 10 regions at NUTS2 (must match mods.modify_nuts3_shapes)
     DE: 3 # NUTS3 as a proxy for 5 regions
     DK: 1 # +1 Sjaelland
     GB: 1 # +1 Northern Ireland
     IT: 1 # +2 Sicily, Sardinia
   temporal:
-    resolution_sector: 24
+    # Very low temporal resolution: 365-hour blocks, i.e. 24 snapshots per year.
+    # Sensitivity runs compare scenarios against each other, so throughput beats
+    # intra-year detail. Must be a string ending in "h"/"seg"/"sn" — a bare
+    # integer silently produces no snapshot weightings (scripts/time_aggregation.py).
+    resolution_sector: 365H
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
@@ -245,32 +261,53 @@ solving:
         2040: 0.09
         2045: -0.05
         2050: -0.048
+    # --- EAG targets disabled for the biomass sensitivity runs ----------------
+    # The EAG expansion goals pin the Austrian renewable build-out to fixed
+    # policy values, and the biomass volume floor pins biomass use itself. Both
+    # mask the system response this sensitivity is meant to measure, so they are
+    # switched off here.
+    #
+    # NOTE: commenting the values out is not enough to disable them. This file is
+    # merged *on top of* config/config.at.yaml via `--configfile`, and snakemake's
+    # `update_config` merges dictionaries recursively -- a key that is absent (or
+    # set to an empty dict) keeps the config.at.yaml value. The targets therefore
+    # have to be overridden with 0 instead of removed. A limit of 0 leaves the
+    # constraint trivially satisfied (>= 0 GW / >= 0 TWh); see
+    # mods/constraints/production.py and
+    # scripts/pypsa-de/additional_functionality.py::add_capacity_limits.
     limits_capacity_min:  # in GW
       Link:
         H2 Electrolysis:
           AT:
             # EAG Ausbauziel: 1 GW Elektrolyseleistung in MW_el in AT
             # limit set for p_nom_opt, which already is for MW_el at bus0
-            2030: 1
-            2040: 1
-            2050: 1
+            # 2030: 1
+            # 2040: 1
+            # 2050: 1
+            2030: 0
+            2040: 0
+            2050: 0
     limits_volume_min:
       # in TWh/a Quelle EAG + https://energie.gv.at/energiewende/wie-ist-der-stand-zur-erneuerbaren-stromerzeugung-in-den-bundeslaendern
       solar:
         AT:
-          2030: 14
+          # 2030: 14
+          2030: 0
       wind:
         AT:
-          2030: 17
+          # 2030: 17
+          2030: 0
       hydro:
         AT:
-          2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+          # 2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+          2030: 0
       biomass:
         AT:
-          2030: 5.6
+          # 2030: 5.6
+          2030: 0
   solver:
-    name: highs
-    options: highs-default
+    name: gurobi
+    options: gurobi-default
   solver_options:
     # https://ergo-code.github.io/HiGHS/dev/options/definitions/
     highs-default:
@@ -287,7 +324,16 @@ solving:
 mods:
 
   # AT10 or NUTS3 administrative clustering
-  modify_nuts3_shapes: AT35DE5
+  modify_nuts3_shapes: AT10DE5
+
+  # Biomass availability sensitivity. `factors.default` is overridden per scenario
+  # in config/scenarios-sensitivities/scenarios.biomass-sensitivities.yaml; the
+  # carrier list is inherited from config/config.at.yaml and covers all six
+  # potential columns, including the must-run unsustainable ones.
+  biomass_potential_scaling:
+    enable: true
+    factors:
+      default: 1.0
 
   # use improved Austrian gas grid capacities
   # provided by AGGM experts
