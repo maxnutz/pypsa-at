@@ -184,7 +184,8 @@ def find_benchmark_files(paths: list[Path]) -> list[Path]:
     files = []
     for path in paths:
         if path.is_file():
-            files.append(path)
+            if _is_solve_benchmark(path):
+                files.append(path)
             continue
         files += [p for p in path.rglob("*") if p.is_file() and _is_solve_benchmark(p)]
 
