@@ -23,6 +23,7 @@ from mods.network.common import (
     prepare_sector_network,
 )
 from mods.network.osm_lines import filter_inter_regional_lines
+from mods.potentials.biomass import scale_biomass_potentials
 
 __all__ = [
     "TYNDP_TO_PYPSA_LOCATION_TRANSMISSION",
@@ -38,4 +39,5 @@ __all__ = [
     "filter_inter_regional_lines",
     "modify_prenetwork",
     "prepare_sector_network",
+    "scale_biomass_potentials",
 ]
