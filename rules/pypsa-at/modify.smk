@@ -335,6 +335,26 @@ use rule cluster_gas_network as cluster_gas_network_at with:
 ruleorder: modify_brownfield_gas_network_AT > cluster_gas_network  # AT wins for the final .csv
 
 
+# build_biomass_potentials: redirect the clustered potentials to a "_raw" file so
+# scale_biomass_potentials_at can apply the configured biomass availability factors.
+# The potentials CSV is the single source of truth for biomass availability, so
+# scaling it here keeps the generator p_nom/e_sum_min/e_sum_max consistent.
+use rule build_biomass_potentials as build_biomass_potentials_at with:
+    output:
+        **{
+            **rules.build_biomass_potentials.output,
+            "biomass_potentials": resources(
+                "biomass_potentials_s_{clusters}_{planning_horizons}_raw.csv"
+            ),
+        },
+
+
+ruleorder: build_biomass_potentials_at > build_biomass_potentials  # AT wins for the raw potentials
+
+
+ruleorder: scale_biomass_potentials_at > build_biomass_potentials  # AT wins for the final .csv
+
+
 # Overwrite attributes in the power plants resource CSV file
 rule overwrite_powerplants_at:
     input:
