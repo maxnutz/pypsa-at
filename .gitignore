@@ -113,3 +113,8 @@ CLAUDE.local.md
 
 # PyPSA-AT specific
 __marimo__/
+
+# sensitivity-specific
+telegram_bot.py
+run_job_nora.sh
+.claude/*.md
