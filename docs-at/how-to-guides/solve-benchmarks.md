@@ -1,8 +1,7 @@
 # How-To: Track Solving Times
 
 Estimating how long a run will occupy the SLURM cluster is guesswork without a record of past
-runs. [`evals.solve_benchmarks`][evals.solve_benchmarks] builds that record: it reads the
-benchmark files Snakemake writes for every solve job, adds the resolution and solver settings of
+runs. [`evals.solve_benchmarks`][evals.solve_benchmarks] builds a record of the resources, past runs took from the SLURM cluster: it reads the benchmark files Snakemake writes for every solve job, adds the resolution and solver settings of
 the run, and appends one row per solve job to a CSV file that grows over time.
 
 ---
@@ -10,7 +9,7 @@ the run, and appends one row per solve job to a CSV file that grows over time.
 ## Collect benchmarks after a run
 
 ```shell
-pixi run solve-benchmarks results/industrial-demand-sensitivities
+pixi run solve-benchmarks results/<your_scenario>
 ```
 
 The argument is any path below which solve benchmarks are searched — a results root, a single run
@@ -20,9 +19,8 @@ directory, or a single benchmark file. Several paths can be passed at once:
 pixi run solve-benchmarks results/v2025.02 results/sysgf
 ```
 
-By default rows are appended to `solve_benchmarks.csv` in the project root. The file lives outside
-`results/` and `benchmarks/` on purpose, because `pixi run reset` wipes those directories while
-the history is supposed to outlive individual runs.
+By default rows are appended to `solve_benchmarks.csv` in the project root. The file lives in 
+the pypsa-at - folder.
 
 | Option | Effect |
 |--------|--------|
@@ -49,7 +47,6 @@ producing duplicates, and an existing file is never rewritten — new rows go to
 | Resolution | `at_admin_level`, `resolution_sector`, `resolution_elec` |
 | Provenance | `solver`, `solver_options`, `benchmark_file` |
 
-Two things are worth knowing when reading the numbers:
 
 - **Two core-hour columns.** `core_hours_allocated` is `threads × solve_time_h`, i.e. what the
   cluster bills for the job. `core_hours_cpu` is the CPU time the solver actually spent. Their
