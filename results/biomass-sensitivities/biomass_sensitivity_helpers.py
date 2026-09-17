@@ -5,18 +5,30 @@
 """
 Heavier-computation helpers for the biomass availability sensitivity notebook.
 
-Scans ``results/biomass-sensitivities/BIO_*`` scenario directories (produced by
-``config/config.sensitivities-biomass.yaml``), parses per-year solve status from the
-Snakemake logs, and extracts a small set of statistics from each solved network into a
-tidy long-format DataFrame. Extracted statistics are cached to disk (one parquet file
-per solved scenario/year) so the marimo notebook stays fast on reruns; a cache entry is
-recomputed automatically once the source ``.nc`` file is newer than it, so results stay
-in sync as ``run_job_nora.sh`` finishes more scenario/year combinations in the
-background.
+Scans a campaign directory under ``results/`` for ``BIO_*`` scenario directories,
+parses per-year solve status from the Snakemake logs, and extracts a small set of
+statistics from each solved network into a tidy long-format DataFrame. Extracted
+statistics are cached to disk (one parquet file per solved scenario/year) so the
+marimo notebook stays fast on reruns; a cache entry is recomputed automatically once
+the source ``.nc`` file is newer than it, so results stay in sync as
+``run_job_nora.sh`` finishes more scenario/year combinations in the background.
+
+Two campaigns share these helpers and the notebook:
+
+``results/biomass-sensitivities``
+    ``config/config.sensitivities-biomass.yaml``, scenarios ``BIO_<factor>``. The
+    factor scales biomass potentials in *every* modelled country.
+``results/biomass-at-sensitivities``
+    ``config/config.sensitivities-biomass-at.yaml``, scenarios ``BIO_AT_<factor>``.
+    The factor scales Austrian potentials only; everything else stays unscaled.
+
+Every extracted metric carries a ``location`` (the AT10/NUTS-style region code, e.g.
+``AT12``, ``DE1``, ``FR``), so the notebook can aggregate over all modelled regions or
+restrict to Austria without re-reading any network.
 
 Not covered by CLAUDE.md's ``test/`` layout (this is a results-specific analysis
 artifact, not `mods/`, `evals/`, or `scripts/pypsa-at/`); verified instead by running
-the notebook against the real (partially solved) campaign on disk.
+the notebook against the real (partially solved) campaigns on disk.
 """
 
 import re
@@ -32,7 +44,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from evals.fileio import read_networks  # noqa: E402
 
-RUN_PREFIX = "biomass-sensitivities"
+RESULTS_ROOT = REPO_ROOT / "results"
 PLANNING_HORIZONS = ["2025", "2030", "2040", "2050"]
 NETWORK_SUBDIR = "networks"
 NETWORK_STEM = "base_s_adm__none_{year}"
@@ -54,35 +66,56 @@ BIOMASS_PRIMARY_BUS_CARRIERS = ["solid biomass", "biogas"]
 # notebook).
 BIOMASS_TRANSPORT_CARRIERS = ["solid biomass transport"]
 
+# Region scopes offered by the notebook's radio button, mapped to the prefix a
+# `location` has to start with to be counted. ``None`` keeps every modelled region.
+# Austrian locations are the AT10 codes (AT11 ... AT34, plus the AT333 subnet); there
+# is no bare "AT" location under administrative clustering, so a prefix match is both
+# sufficient and exact.
+REGION_SCOPES: dict[str, str | None] = {
+    "All regions": None,
+    "Austria": "AT",
+}
+
 # Bumped whenever extract_metrics()'s output schema or logic changes, so a code change
 # doesn't silently keep serving stale cached rows computed under the old logic (the
 # mtime check alone can't catch that, since the source .nc file didn't change).
-CACHE_VERSION = 2
+CACHE_VERSION = 3
 
 SOLVE_STATUS_LOG = "logs/{stem}_python.log"
 TERMINATION_RE = re.compile(r"Termination condition:\s*(\S+)")
+
+
+SCENARIO_RE = re.compile(r"^BIO(?:_[A-Z]+)*_(\d+)$")
+
+SCENARIO_COLUMNS = ["scenario", "factor", "path"]
 
 
 def discover_scenarios(root: Path) -> pd.DataFrame:
     """
     Find biomass sensitivity scenario directories and their scaling factor.
 
+    Matches both campaigns' naming schemes: ``BIO_150`` (all countries scaled) and
+    ``BIO_AT_150`` (Austria only), i.e. ``BIO`` followed by any number of uppercase
+    qualifiers and a trailing percentage.
+
     Parameters
     ----------
     root
-        The results folder to scan, e.g. ``results/biomass-sensitivities``.
+        The campaign folder to scan, e.g. ``results/biomass-sensitivities`` or
+        ``results/biomass-at-sensitivities``.
 
     Returns
     -------
     :
         One row per scenario with columns ``scenario`` (e.g. "BIO_150"),
-        ``factor`` (e.g. 1.5), and ``path``. Sorted by factor.
+        ``factor`` (e.g. 1.5), and ``path``. Sorted by factor. Empty (but with those
+        columns) when ``root`` holds no scenario directories.
     """
     rows = []
     for path in sorted(root.glob("BIO_*")):
         if not path.is_dir():
             continue
-        match = re.match(r"BIO_(\d+)$", path.name)
+        match = SCENARIO_RE.match(path.name)
         if not match:
             continue
         rows.append(
@@ -92,7 +125,36 @@ def discover_scenarios(root: Path) -> pd.DataFrame:
                 "path": path,
             }
         )
+    if not rows:
+        return pd.DataFrame(columns=SCENARIO_COLUMNS)
     return pd.DataFrame(rows).sort_values("factor").reset_index(drop=True)
+
+
+def discover_campaigns(results_root: Path = RESULTS_ROOT) -> list[str]:
+    """
+    List the campaign folder names under ``results/`` that hold biomass scenarios.
+
+    Used to populate the notebook's campaign selector, so a newly finished campaign
+    shows up without editing the notebook.
+
+    Parameters
+    ----------
+    results_root
+        The folder holding one subfolder per run prefix, i.e. ``results/``.
+
+    Returns
+    -------
+    :
+        Sorted campaign names, e.g. ``["biomass-at-sensitivities",
+        "biomass-sensitivities"]``.
+    """
+    if not results_root.is_dir():
+        return []
+    return sorted(
+        path.name
+        for path in results_root.iterdir()
+        if path.is_dir() and not discover_scenarios(path).empty
+    )
 
 
 def parse_solve_status(scenario_dir: Path) -> pd.DataFrame:
@@ -161,7 +223,7 @@ def all_solve_status(root: Path) -> pd.DataFrame:
     Parameters
     ----------
     root
-        The results folder to scan, e.g. ``results/biomass-sensitivities``.
+        The campaign folder to scan, e.g. ``results/biomass-sensitivities``.
 
     Returns
     -------
@@ -185,27 +247,29 @@ def all_solve_status(root: Path) -> pd.DataFrame:
     ]
 
 
+METRIC_COLUMNS = ["metric", "carrier", "bus_carrier", "location", "value", "weight"]
+
+
 def _series_to_tidy(series: pd.Series, metric: str) -> pd.DataFrame:
     """Turn a pypsa.statistics Series (any index shape) into tidy metric rows."""
     frame = series.rename("value").reset_index()
-    if "carrier" not in frame.columns:
-        frame["carrier"] = None
-    if "bus_carrier" not in frame.columns:
-        frame["bus_carrier"] = None
+    for column in ("carrier", "bus_carrier", "location"):
+        if column not in frame.columns:
+            frame[column] = None
     frame["metric"] = metric
-    return frame[["metric", "carrier", "bus_carrier", "value"]]
+    frame["weight"] = np.nan
+    return frame[METRIC_COLUMNS]
 
 
-def _weighted_average_price(n, carrier: str) -> float:
+def _price_per_location(n, carrier: str) -> pd.DataFrame:
     """
-    Withdrawal-weighted average marginal price across all buses of one carrier.
+    Annual average marginal price of one bus carrier, per region, with its weight.
 
-    Buses are first time-weighted (via snapshot weightings) to one annual average
-    price each, then averaged across regions weighted by each region's annual
-    withdrawal of that carrier, so regions that actually consume more of it dominate
-    the system-level number. Falls back to an unweighted mean across regions when
-    total withdrawal is zero (e.g. the resource is not scarce and marginal price is
-    ~0 everywhere).
+    Each bus of the carrier is time-weighted (via snapshot weightings) into one annual
+    average price, then averaged per region. The region's annual withdrawal of the
+    carrier is returned alongside as ``weight``, so the notebook can form a
+    withdrawal-weighted average over whatever set of regions the user selected (see
+    :func:`weighted_price`) rather than being locked into a system-wide number here.
 
     Parameters
     ----------
@@ -217,28 +281,35 @@ def _weighted_average_price(n, carrier: str) -> float:
     Returns
     -------
     :
-        The weighted-average marginal price in EUR/MWh, or NaN if the carrier has no
-        buses in this network.
+        One row per region with columns ``location``, ``value`` (EUR/MWh) and
+        ``weight`` (MWh withdrawn). Empty when the carrier has no buses.
     """
     buses = n.buses[n.buses.carrier == carrier]
     if buses.empty:
-        return np.nan
+        return pd.DataFrame(columns=["location", "value", "weight"])
 
     weights_t = n.snapshot_weightings.objective
     marginal_price = n.buses_t.marginal_price[buses.index]
     price_per_bus = marginal_price.mul(weights_t, axis=0).sum() / weights_t.sum()
-    price_per_location = price_per_bus.set_axis(
+    price_per_location = price_per_bus.groupby(
         buses.loc[price_per_bus.index, "location"]
-    )
+    ).mean()
 
-    withdrawal_per_location = n.statistics.withdrawal(
-        bus_carrier=carrier, groupby=["location"]
-    )
-    weight = withdrawal_per_location.reindex(price_per_location.index).fillna(0)
+    # statistics.withdrawal() keeps the component level in the index even when only
+    # "location" is requested, so it has to be summed down to a plain location index
+    # before it can line up with the prices.
+    withdrawal = n.statistics.withdrawal(bus_carrier=carrier, groupby=["location"])
+    withdrawal = withdrawal.groupby(level="location").sum()
 
-    if weight.sum() > 0:
-        return float((price_per_location * weight).sum() / weight.sum())
-    return float(price_per_location.mean())
+    return pd.DataFrame(
+        {
+            "location": price_per_location.index,
+            "value": price_per_location.to_numpy(),
+            "weight": withdrawal.reindex(price_per_location.index)
+            .fillna(0.0)
+            .to_numpy(),
+        }
+    )
 
 
 def extract_metrics(n, sector_map: dict[str, str]) -> pd.DataFrame:
@@ -246,7 +317,9 @@ def extract_metrics(n, sector_map: dict[str, str]) -> pd.DataFrame:
     Extract the statistics needed for the biomass sensitivity notebook.
 
     Runs all statistics calls once per network so a network only needs to be loaded a
-    single time regardless of how many questions the notebook answers from it.
+    single time regardless of how many questions the notebook answers from it. Every
+    metric is broken down by ``location`` so the notebook can aggregate over all
+    modelled regions or restrict to Austria from the same cached rows.
 
     Parameters
     ----------
@@ -263,8 +336,10 @@ def extract_metrics(n, sector_map: dict[str, str]) -> pd.DataFrame:
     -------
     :
         Tidy long-format DataFrame with columns ``metric``, ``carrier``,
-        ``bus_carrier``, ``value``, ``unit``. One of four ``metric`` values:
-        "sector_use", "total_biomass_use", "biomass_price", "carrier_supply".
+        ``bus_carrier``, ``location``, ``value``, ``weight``, ``sector``, ``unit``.
+        One of four ``metric`` values: "sector_use", "total_biomass_use",
+        "biomass_price", "carrier_supply". ``weight`` is only populated for
+        "biomass_price" rows (see :func:`weighted_price`).
     """
     frames = []
 
@@ -272,7 +347,8 @@ def extract_metrics(n, sector_map: dict[str, str]) -> pd.DataFrame:
     # into a sector via sector_map. Inter-regional transport links are dropped first
     # since they do not represent end use.
     sector_withdrawal = n.statistics.withdrawal(
-        bus_carrier=BIOMASS_PRIMARY_BUS_CARRIERS, groupby=["carrier", "bus_carrier"]
+        bus_carrier=BIOMASS_PRIMARY_BUS_CARRIERS,
+        groupby=["carrier", "bus_carrier", "location"],
     )
     sector_withdrawal = sector_withdrawal[
         ~sector_withdrawal.index.get_level_values("carrier").isin(
@@ -289,33 +365,97 @@ def extract_metrics(n, sector_map: dict[str, str]) -> pd.DataFrame:
     # headline total). Transport links also show up as "supply" at the destination
     # region under statistics.supply(), so they are dropped here too, exactly like in
     # the sector-use breakdown, or the same shipped energy would be counted twice.
+    # Note that dropping them is also what makes the Austria-only view meaningful:
+    # what is left is biomass raised from Austrian potential, not biomass railed in.
     total_use = n.statistics.supply(
-        bus_carrier=BIOMASS_PRIMARY_BUS_CARRIERS, groupby=["carrier", "bus_carrier"]
+        bus_carrier=BIOMASS_PRIMARY_BUS_CARRIERS,
+        groupby=["carrier", "bus_carrier", "location"],
     )
     total_use = total_use[
         ~total_use.index.get_level_values("carrier").isin(BIOMASS_TRANSPORT_CARRIERS)
     ]
     frames.append(_series_to_tidy(total_use, "total_biomass_use"))
 
-    # Q3 - biomass price per primary carrier.
-    price_rows = [
-        {
-            "metric": "biomass_price",
-            "carrier": carrier,
-            "bus_carrier": carrier,
-            "value": _weighted_average_price(n, carrier),
-        }
-        for carrier in BIOMASS_PRIMARY_BUS_CARRIERS
-    ]
-    frames.append(pd.DataFrame(price_rows))
+    # Q3 - biomass price per primary carrier and region, with the withdrawal weight
+    # kept alongside so the region scope chosen in the notebook decides the average.
+    for carrier in BIOMASS_PRIMARY_BUS_CARRIERS:
+        price_frame = _price_per_location(n, carrier)
+        price_frame["metric"] = "biomass_price"
+        price_frame["carrier"] = carrier
+        price_frame["bus_carrier"] = carrier
+        frames.append(price_frame[METRIC_COLUMNS])
 
     # Q5 - system-wide supply of every carrier, to compare against the biomass factor.
-    carrier_supply = n.statistics.supply(groupby=["carrier", "bus_carrier"])
+    carrier_supply = n.statistics.supply(groupby=["carrier", "bus_carrier", "location"])
     frames.append(_series_to_tidy(carrier_supply, "carrier_supply"))
 
     result = pd.concat(frames, ignore_index=True)
     result["unit"] = np.where(result["metric"] == "biomass_price", "EUR/MWh", "MWh")
     return result
+
+
+def select_region(frame: pd.DataFrame, scope: str) -> pd.DataFrame:
+    """
+    Restrict tidy metric rows to one region scope.
+
+    Parameters
+    ----------
+    frame
+        Tidy metric rows carrying a ``location`` column, as produced by
+        :func:`load_all_metrics`.
+    scope
+        A key of :data:`REGION_SCOPES`, e.g. "All regions" or "Austria".
+
+    Returns
+    -------
+    :
+        ``frame`` unchanged for the unrestricted scope, otherwise only the rows whose
+        ``location`` starts with the scope's prefix.
+
+    Raises
+    ------
+    KeyError
+        If ``scope`` is not a known region scope.
+    """
+    prefix = REGION_SCOPES[scope]
+    if prefix is None:
+        return frame
+    return frame[frame["location"].fillna("").str.startswith(prefix)]
+
+
+def weighted_price(frame: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
+    """
+    Collapse per-region price rows into a withdrawal-weighted average.
+
+    Regions that actually consume more of the carrier dominate the resulting number.
+    Falls back to an unweighted mean across regions when the group's total withdrawal
+    is zero (e.g. the resource is not scarce and the marginal price is ~0 everywhere).
+
+    Parameters
+    ----------
+    frame
+        "biomass_price" rows with ``value`` (EUR/MWh) and ``weight`` (MWh) columns.
+    group_columns
+        Columns to average within, e.g. ``["factor", "year", "carrier"]``.
+
+    Returns
+    -------
+    :
+        One row per group with the averaged ``value``.
+    """
+
+    def _average(group: pd.DataFrame) -> float:
+        weight = group["weight"].fillna(0.0)
+        if weight.sum() > 0:
+            return float((group["value"] * weight).sum() / weight.sum())
+        return float(group["value"].mean())
+
+    return (
+        frame.groupby(group_columns)
+        .apply(_average, include_groups=False)
+        .rename("value")
+        .reset_index()
+    )
 
 
 def cache_path(root: Path, scenario: str, year: str) -> Path:
@@ -332,7 +472,7 @@ def load_all_metrics(
     Parameters
     ----------
     root
-        The results folder to scan, e.g. ``results/biomass-sensitivities``.
+        The campaign folder to scan, e.g. ``results/biomass-sensitivities``.
     sector_map
         Passed through to :func:`extract_metrics`.
     force_recompute
@@ -383,11 +523,8 @@ def load_all_metrics(
                 "scenario",
                 "factor",
                 "year",
-                "metric",
-                "carrier",
-                "bus_carrier",
+                *METRIC_COLUMNS,
                 "sector",
-                "value",
                 "unit",
             ]
         )

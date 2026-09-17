@@ -7,7 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import sys
-    from pathlib import Path
 
     import marimo as mo
     import numpy as np
@@ -16,12 +15,12 @@ def _():
 
     # cwd is the repo root (`pixi run marimo edit results/biomass-sensitivities/...`),
     # matching the existing .marimo/*.py notebooks, which also use repo-root-relative
-    # paths rather than paths relative to the notebook file itself.
+    # paths rather than paths relative to the notebook file itself. The helper module
+    # lives next to this notebook; the campaign it is pointed at is chosen below.
     sys.path.insert(0, "results/biomass-sensitivities")
     import biomass_sensitivity_helpers as bsh
 
-    ROOT = Path("results/biomass-sensitivities")
-    return ROOT, bsh, mo, np, pd, px
+    return bsh, mo, np, pd, px
 
 
 @app.cell(hide_code=True)
@@ -29,13 +28,62 @@ def _(mo):
     mo.md("""
     # Biomass availability sensitivity
 
-    Compares the `results/biomass-sensitivities/BIO_*` runs. Each scenario scales
-    every biomass potential column (`biomass_potentials_s_*.csv`) by one factor,
-    applied to **all** modelled countries
-    (`config/config.sensitivities-biomass.yaml`, `mods.biomass_potential_scaling`).
-    `BIO_100` is the unscaled reference (factor 1.0).
+    Compares the `BIO_*` runs of one sensitivity campaign. Each scenario scales every
+    biomass potential column (`biomass_potentials_s_*.csv`) by one factor; `*_100` is
+    the unscaled reference (factor 1.0). Two campaigns share this notebook:
+
+    | Campaign (`results/` subfolder) | Config | Scaled countries |
+    | --- | --- | --- |
+    | `biomass-sensitivities` | `config/config.sensitivities-biomass.yaml` | all modelled countries |
+    | `biomass-at-sensitivities` | `config/config.sensitivities-biomass-at.yaml` | Austria only |
+
+    Pick the campaign and the region the evaluation covers below — both are echoed in
+    every plot subtitle so exported figures stay self-describing.
+
+    ### :warning: Carveats
+    - Q2 (withdrawal) under "Austria" includes biomass railed in over solid biomass transport; Q4 (supply) excludes those links, so it's biomass raised from Austrian potential. The gap is the net import.
+    - Q5 drops carriers on copper-plated EU buses entirely under "Austria". There is not yet Austria-scaling for EU buses.
     """)
     return
+
+
+@app.cell(hide_code=True)
+def _(bsh, mo):
+    _campaigns = bsh.discover_campaigns()
+    campaign_selector = mo.ui.dropdown(
+        options=_campaigns,
+        value="biomass-sensitivities"
+        if "biomass-sensitivities" in _campaigns
+        else _campaigns[0],
+        label="Campaign",
+    )
+    region_selector = mo.ui.radio(
+        options=list(bsh.REGION_SCOPES),
+        value="All regions",
+        label="Region scope",
+        inline=True,
+    )
+    mo.vstack([campaign_selector, region_selector])
+    return campaign_selector, region_selector
+
+
+@app.cell
+def _(bsh, campaign_selector):
+    # Absolute, so the notebook keeps working no matter which directory marimo was
+    # started from (the helper import above is the only cwd-sensitive line left).
+    ROOT = bsh.RESULTS_ROOT / campaign_selector.value
+    return (ROOT,)
+
+
+@app.cell
+def _(campaign_selector, region_selector):
+    def plot_title(text: str) -> str:
+        """Plot title carrying the campaign and region scope as a subtitle."""
+        return (
+            f"{text}<br><sup>{campaign_selector.value} · {region_selector.value}</sup>"
+        )
+
+    return (plot_title,)
 
 
 @app.cell(hide_code=True)
@@ -69,7 +117,7 @@ def _():
         "BioSNG CC": "Gas grid",
         "biomass to liquid": "Fuels",
         "biomass to liquid CC": "Fuels",
-        "electrobiofuels": "Transport fuels",  # double counting?!
+        "electrobiofuels": "Fuels",  # double counting?!
         "biomass-to-methanol": "Methanol",
         "biomass-to-methanol CC": "Methanol",
         "solid biomass to hydrogen": "Hydrogen",
@@ -104,8 +152,11 @@ def _(ROOT, bsh):
 
 
 @app.cell
-def _(mo, status_pivot):
-    mo.ui.table(status_pivot.reset_index(), label="Solve status by scenario and year")
+def _(campaign_selector, mo, status_pivot):
+    mo.ui.table(
+        status_pivot.reset_index(),
+        label=f"Solve status by scenario and year ({campaign_selector.value})",
+    )
     return
 
 
@@ -141,22 +192,36 @@ def _(ROOT, SECTOR_MAP, bsh, force_recompute):
 
 
 @app.cell(hide_code=True)
+def _(bsh, metrics_df, region_selector):
+    # Every metric is extracted per `location` (AT12, DE1, FR, ...), so switching the
+    # region scope is a row filter on the cached frame - no network is re-read.
+    metrics_scoped = bsh.select_region(metrics_df, region_selector.value)
+    return (metrics_scoped,)
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## Q2 — Which sectors use biomass, and how does that shift with availability?
 
     Withdrawal from the primary biomass buses (`solid biomass`, `biogas`),
-    bucketed by the sector mapping above and summed across all modelled countries.
+    bucketed by the sector mapping above and summed across the regions in scope.
     `municipal solid waste` is excluded throughout this notebook: it is mixed waste
     incinerated as waste-to-energy, not a biomass feedstock, and is deliberately not
     scaled by `mods.biomass_potential_scaling` either (see `config/config.at.yaml`).
+
+    **Under the "Austria" scope** this is biomass *consumed* in Austria, which
+    includes biomass railed in from abroad over `solid biomass transport` links.
+    Q4 below counts biomass *supplied* at Austrian buses instead, i.e. what Austrian
+    potential actually yields — so the two need not match, and the gap is the net
+    import.
     """)
     return
 
 
 @app.cell
-def _(bsh, metrics_df, px):
-    sector_use = metrics_df[metrics_df["metric"] == "sector_use"].copy()
+def _(bsh, metrics_scoped, plot_title, px):
+    sector_use = metrics_scoped[metrics_scoped["metric"] == "sector_use"].copy()
     sector_use["TWh"] = sector_use["value"] / 1e6
     sector_totals = sector_use.groupby(["factor", "year", "sector"], as_index=False)[
         "TWh"
@@ -170,10 +235,61 @@ def _(bsh, metrics_df, px):
         facet_col="year",
         category_orders={"year": bsh.PLANNING_HORIZONS},
         barmode="stack",
-        title="Biomass use by sector vs. availability factor",
+        title=plot_title("Biomass use by sector vs. availability factor"),
         labels={"factor": "Biomass availability factor"},
     )
     fig_sector_use
+    return (sector_totals,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    ### Per-sector response
+
+    Same data as the stacked bars above, but one sector at a time: availability
+    factor on the x-axis, that sector's biomass withdrawal on the y-axis, one line
+    per planning horizon. Reading a single sector on its own y-scale makes it
+    visible whether it keeps absorbing extra biomass as availability grows or
+    saturates early — which the stacked view hides for the smaller sectors.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, sector_totals):
+    _sector_options = sorted(sector_totals["sector"].unique())
+    _default = (
+        "Heat" if "Heat" in _sector_options else next(iter(_sector_options), None)
+    )
+    sector_selector = mo.ui.dropdown(
+        options=_sector_options,
+        value=_default,
+        label="Sector",
+    )
+    sector_selector
+    return (sector_selector,)
+
+
+@app.cell
+def _(bsh, plot_title, px, sector_selector, sector_totals):
+    selected_sector = sector_totals[
+        sector_totals["sector"] == sector_selector.value
+    ].sort_values(["year", "factor"])
+
+    fig_sector_detail = px.line(
+        selected_sector,
+        x="factor",
+        y="TWh",
+        color="year",
+        category_orders={"year": bsh.PLANNING_HORIZONS},
+        markers=True,
+        title=plot_title(
+            f"{sector_selector.value}: biomass use vs. availability factor"
+        ),
+        labels={"factor": "Biomass availability factor", "year": "Planning horizon"},
+    )
+    fig_sector_detail
     return
 
 
@@ -184,7 +300,7 @@ def _(mo):
 
     Withdrawal-weighted average marginal price at buses of each primary biomass
     carrier (time-weighted per bus with snapshot weightings, then weighted across
-    regions by each region's annual withdrawal).
+    the regions in scope by each region's annual withdrawal).
 
     **Caveat:** forced consumption in 2025 and 2030 by model design!
     """)
@@ -192,8 +308,11 @@ def _(mo):
 
 
 @app.cell
-def _(bsh, metrics_df, px):
-    price = metrics_df[metrics_df["metric"] == "biomass_price"].copy()
+def _(bsh, metrics_scoped, plot_title, px):
+    price = bsh.weighted_price(
+        metrics_scoped[metrics_scoped["metric"] == "biomass_price"],
+        ["factor", "year", "carrier"],
+    )
 
     fig_price = px.line(
         price.sort_values("factor"),
@@ -203,7 +322,7 @@ def _(bsh, metrics_df, px):
         facet_col="year",
         category_orders={"year": bsh.PLANNING_HORIZONS},
         markers=True,
-        title="Biomass shadow price vs. availability factor",
+        title=plot_title("Biomass shadow price vs. availability factor"),
         labels={"factor": "Biomass availability factor", "value": "EUR/MWh"},
     )
     fig_price
@@ -215,15 +334,17 @@ def _(mo):
     mo.md("""
     ## Q4 — How much biomass is used, and is there a saturation point?
 
-    Total dispatched biomass (all primary carriers, all modelled countries) per
-    year, one line per availability factor.
+    Total dispatched biomass (all primary carriers, all regions in scope) per
+    year, one line per availability factor. Inter-regional `solid biomass transport`
+    links are excluded, so under the "Austria" scope this is biomass *supplied* from
+    Austrian potential rather than biomass consumed in Austria (see Q2).
     """)
     return
 
 
 @app.cell
-def _(bsh, metrics_df, px):
-    total_use = metrics_df[metrics_df["metric"] == "total_biomass_use"].copy()
+def _(bsh, metrics_scoped, plot_title, px):
+    total_use = metrics_scoped[metrics_scoped["metric"] == "total_biomass_use"].copy()
     total_use_by_year = total_use.groupby(["factor", "year"], as_index=False)[
         "value"
     ].sum()
@@ -246,7 +367,9 @@ def _(bsh, metrics_df, px):
             "year": bsh.PLANNING_HORIZONS,
         },
         markers=True,
-        title="Total biomass use per year, one line per availability factor",
+        title=plot_title(
+            "Total biomass use per year, one line per availability factor"
+        ),
         labels={"factor_label": "Biomass availability factor"},
     )
     fig_total_use
@@ -267,14 +390,16 @@ def _(mo):
 
 
 @app.cell
-def _(bsh, px, total_use_by_year):
+def _(bsh, plot_title, px, total_use_by_year):
     fig_total_use_scatter = px.scatter(
         total_use_by_year.sort_values(["year", "factor"]),
         x="factor",
         y="TWh",
         color="year",
         category_orders={"year": bsh.PLANNING_HORIZONS},
-        title="Total biomass use vs. availability factor, all years combined",
+        title=plot_title(
+            "Total biomass use vs. availability factor, all years combined"
+        ),
         labels={"factor": "Biomass availability factor"},
     )
     fig_total_use_scatter
@@ -325,21 +450,27 @@ def _(mo):
     mo.md("""
     ## Q5 — Which other carriers are used more or less as biomass availability changes?
 
-    System-wide supply of every carrier (all modelled countries), correlated
+    Supply of every carrier across the regions in scope, correlated
     against the biomass factor per year via a linear slope
     (`ΔTWh / Δfactor`, at least 3 solved factors required). Negative slope =
     crowded out by more biomass; positive slope = grows alongside it.
 
-    **Caveat:** this uses raw `n.statistics.supply()` per carrier, so
+    **Caveats:** this uses raw `n.statistics.supply()` per carrier, so
     transmission/pipeline-type carriers reflect throughput rather than final
-    consumption.
+    consumption. Under the "Austria" scope, carriers that sit on copper-plated `EU`
+    buses (e.g. oil, some shipping fuels) have no Austrian location and therefore
+    drop out of the table entirely rather than showing up with a zero slope.
     """)
     return
 
 
 @app.cell
-def _(metrics_df, np, pd):
-    carrier_supply = metrics_df[metrics_df["metric"] == "carrier_supply"].copy()
+def _(metrics_scoped, np, pd):
+    carrier_supply = (
+        metrics_scoped[metrics_scoped["metric"] == "carrier_supply"]
+        .groupby(["factor", "year", "carrier", "bus_carrier"], as_index=False)["value"]
+        .sum()
+    )
     carrier_supply["TWh"] = carrier_supply["value"] / 1e6
 
     def _slope(group):
@@ -381,7 +512,7 @@ def _(mo, slopes):
 
 
 @app.cell
-def _(bsh, carrier_supply, pd, px, top_negative, top_positive):
+def _(bsh, carrier_supply, pd, plot_title, px, top_negative, top_positive):
     movers = pd.concat([top_negative.head(5), top_positive.head(5)])
     mover_keys = set(zip(movers["carrier"], movers["bus_carrier"], strict=True))
     mover_data = carrier_supply[
@@ -398,9 +529,16 @@ def _(bsh, carrier_supply, pd, px, top_negative, top_positive):
         facet_col="year",
         category_orders={"year": bsh.PLANNING_HORIZONS},
         markers=True,
-        title="Top carriers most correlated (+/-) with biomass availability",
+        title=plot_title(
+            "Top carriers most correlated (+/-) with biomass availability"
+        ),
     )
     fig_movers
+    return
+
+
+@app.cell
+def _():
     return
 
 
