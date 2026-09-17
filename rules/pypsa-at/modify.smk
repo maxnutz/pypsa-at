@@ -272,6 +272,31 @@ rule modify_brownfield_gas_network_AT:
         scripts("pypsa-at/modify_brownfield_gas_network_AT.py")
 
 
+rule scale_biomass_potentials_at:
+    input:
+        biomass_potentials_raw=resources(
+            "biomass_potentials_s_{clusters}_{planning_horizons}_raw.csv"
+        ),
+        code_files=["mods/potentials/biomass.py"],
+    output:
+        biomass_potentials=resources(
+            "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
+        ),
+    log:
+        logs("scale_biomass_potentials_at_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("scale_biomass_potentials_at/s_{clusters}_{planning_horizons}")
+    threads: 1
+    resources:
+        mem_mb=1000,
+    params:
+        biomass_potential_scaling=config_provider("mods", "biomass_potential_scaling"),
+    message:
+        "Scaling biomass potentials for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
+    script:
+        scripts("pypsa-at/scale_biomass_potentials_at.py")
+
+
 # --- Upstream rule overrides -------------------------------------------------
 # Upstream rules are kept pristine (identical to pypsa-de). Instead of editing
 # them, we shadow them here so AT can intercept their outputs:
