@@ -136,7 +136,10 @@ def clip_negative_loads_for_edge_cases(n: pypsa.Network, snakemake: Snakemake) -
     Raises
     ------
     RunTimeError
-        If expected edge cases could not be found.
+        If an expected static-Load edge case (e.g. ``H2 for industry``)
+        could not be found. Missing negative electricity Loads only log a
+        warning, since expected negative loads may not be present during
+        sensitivity analysis manipulating demand.
 
     """
     cfg = snakemake.config
@@ -161,7 +164,17 @@ def clip_negative_loads_for_edge_cases(n: pypsa.Network, snakemake: Snakemake) -
         p_set = n.loads_t["p_set"]
         columns = p_set.columns.intersection(n.loads.index[at_location & is_split])
         if not p_set[columns].lt(0).any().any():
-            raise RuntimeError(f"Expected negative electricity Loads for {location}.")
+            # This edge case list was calibrated against the AT35-based
+            # 365H/120H/3H setups. Under other clustering/resolution
+            # combinations (e.g. the industrial-demand-sensitivities runs on
+            # AT10DE5/24H) whether a location's electricity-for-heat
+            # deduction dips below zero is a marginal effect that can
+            # disappear for some scenarios, so there is nothing to clip.
+            logger.warning(
+                f"No negative electricity Loads found for {location}; "
+                "skipping clipping for this location."
+            )
+            return
         p_set[columns] = p_set[columns].clip(lower=0)
 
     # In the reduced at10 test network a few "H2 for industry" negative

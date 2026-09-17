@@ -12,6 +12,7 @@ nav:
   - how-to-guides/index.md
   - Working with Evaluations: how-to-guides/evals.md
   - Production Targets: how-to-guides/production-targets.md
+  - Tracking Solving Times: how-to-guides/solve-benchmarks.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/model-modifications.md
@@ -40,6 +41,7 @@ nav:
     - cli.py: reference/evals/cli.md
     - constants.py: reference/evals/constants.md
     - fileio.py: reference/evals/fileio.md
+    - solve_benchmarks.py: reference/evals/solve_benchmarks.md
     - stats.py: reference/evals/stats.md
     - utils.py: reference/evals/utils.md
     - Plots:

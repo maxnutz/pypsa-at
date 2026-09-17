@@ -47,6 +47,8 @@ generate-config = "python -c 'from scripts.lib.validation.config import generate
 
 evals = "PYTHONPATH='./' python evals/cli.py run-eval"
 
+solve-benchmarks = "PYTHONPATH='./' python evals/solve_benchmarks.py"
+
 workflow = "snakemake all_at -call"
 
 sync-locks = """

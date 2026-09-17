@@ -6,14 +6,24 @@
 run:
   prefix: industrial-demand-sensitivities
   name:
-  - AT_KN2040
+  - Industry_0.6
+  - Industry_0.7
+  - Industry_0.8
+  - Industry_0.9
+  - Industry_1.0
+  - Industry_1.1
+  - Industry_1.2
+  - Industry_1.3
+  - Industry_1.4
+  - Industry_1.5
+  - Industry_1.6
   scenarios:
     enable: true
     # PyPSA-DE uses config/scenarios.automated.yaml to incorporate Ariadne project
     # specific scenario settings in model runs. PyPSA-AT uses the KN2045_Mix scenario
     # for all AT scenarios as a base. As a result, the build_scenario step is obsolete.
     # We simply use the manual file with hard coded values.
-    file: config/scenarios.manual.yaml
+    file: config/scenarios-sensitivities/scenarios.industry-sensitivities.yaml
   shared_resources:
     policy: base #stops recalculating
     exclude:
@@ -25,6 +35,11 @@ run:
     - modify_existing_heating
     - build_custom_cost_at
     - custom_cost_at.csv
+    - industrial_production_per_country   # scaled per-scenario by industry.manipulate_output_historical_scale_factor
+    - build_industrial_production_per_country   # keep its log/benchmark wildcards consistent with the (excluded) output above
+    - modify_historic_industrial_demand   # active rule for industrial_production_per_country.csv (ruleorder over build_industrial_production_per_country)
+    - industrial_energy_demand_per_country_today   # downstream of industrial_production_per_country.csv, no scenario-varying wildcards
+    - build_industrial_energy_demand_per_country_today   # save build_industrial_energy_demand_per_country_today.log in the correct folder
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
@@ -51,13 +66,13 @@ clustering:
   mode: administrative
   administrative:
     level: 0 # countries
-    AT: 3 # 10 regions if NUTS 2, 35 if NUTS 3
+    AT: 2 # 10 regions if NUTS 2, 35 if NUTS 3
     DE: 3 # NUTS3 as a proxy for 5 regions
     DK: 1 # +1 Sjaelland
     GB: 1 # +1 Northern Ireland
     IT: 1 # +2 Sicily, Sardinia
   temporal:
-    resolution_sector: 24
+    resolution_sector: 24H
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
@@ -224,6 +239,7 @@ pypsa_eur:
   StorageUnit: []
 
 solving:
+  runtime: 4h  # 2025 solves take ~20 min, 2030 model is ~10% larger
   options:
     custom_extra_functionality: "../scripts/pypsa-at/additional_functionality.py"
   # The default CO2 budget uses the KSG targets, and the non CO2 emissions from the REMIND model in the KN2045_Mix scenario
@@ -251,26 +267,28 @@ solving:
           AT:
             # EAG Ausbauziel: 1 GW Elektrolyseleistung in MW_el in AT
             # limit set for p_nom_opt, which already is for MW_el at bus0
-            2030: 1
-            2040: 1
-            2050: 1
+            # EAG goals disabled for the industry sensitivities (was 1 GW)
+            2030: 0
+            2040: 0
+            2050: 0
     limits_volume_min:
       # in TWh/a Quelle EAG + https://energie.gv.at/energiewende/wie-ist-der-stand-zur-erneuerbaren-stromerzeugung-in-den-bundeslaendern
+      # EAG goals disabled for the industry sensitivities (was 14 / 17 / 37 / 5.6 TWh)
       solar:
         AT:
-          2030: 14
+          2030: 0
       wind:
         AT:
-          2030: 17
+          2030: 0
       hydro:
         AT:
-          2030: 37  # Should be 47 TWh but that is too much for the networks constraints
+          2030: 0
       biomass:
         AT:
-          2030: 5.6
+          2030: 0
   solver:
-    name: highs
-    options: highs-default
+    name: gurobi
+    options: gurobi-default
   solver_options:
     # https://ergo-code.github.io/HiGHS/dev/options/definitions/
     highs-default:
@@ -287,7 +305,7 @@ solving:
 mods:
 
   # AT10 or NUTS3 administrative clustering
-  modify_nuts3_shapes: AT35DE5
+  modify_nuts3_shapes: AT10DE5
 
   # use improved Austrian gas grid capacities
   # provided by AGGM experts
@@ -364,7 +382,7 @@ mods:
 
   # force country level yearly netted electricity autarky
   net_zero_electricity:
-    enable: true
+    enable: false  # EAG goal disabled for the industry sensitivities
     fuels: ["gas", "H2", "solid biomass", "methanol"]  # green electricity production may be produced from these carriers
     h2_sources: ["AC", "low voltage", "solid biomass"]  # green hydrogen may be produced from these carriers
     AT: "2030"  # start year: constraints will be added from including this year onwards

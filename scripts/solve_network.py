@@ -1597,6 +1597,10 @@ if __name__ == "__main__":
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
     if "infeasible" in condition:
+        # PyPSA-AT: cap the Gurobi IIS computation, which can otherwise run for
+        # many hours on large models. Gurobi raises "No IIS available" when hit.
+        if n.model.solver_name == "gurobi":
+            n.model.solver_model.setParam("TimeLimit", 900)
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
