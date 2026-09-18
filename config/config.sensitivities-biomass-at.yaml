@@ -78,7 +78,7 @@ clustering:
     # Sensitivity runs compare scenarios against each other, so throughput beats
     # intra-year detail. Must be a string ending in "h"/"seg"/"sn" — a bare
     # integer silently produces no snapshot weightings (scripts/time_aggregation.py).
-    resolution_sector: 365H
+    resolution_sector: 6H
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
@@ -442,7 +442,7 @@ mods:
 
   # force country level yearly netted electricity autarky
   net_zero_electricity:
-    enable: true
+    enable: false
     fuels: ["gas", "H2", "solid biomass", "methanol"]  # green electricity production may be produced from these carriers
     h2_sources: ["AC", "low voltage", "solid biomass"]  # green hydrogen may be produced from these carriers
     AT: "2030"  # start year: constraints will be added from including this year onwards

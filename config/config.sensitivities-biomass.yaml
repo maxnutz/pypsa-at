@@ -13,19 +13,19 @@ run:
   # infeasible in 2025. See the header of the scenario file for the per-island
   # thresholds; 0.6 itself is expected to fail in 2030, 2040 and 2050.
   name:
-  # - BIO_060
+  - BIO_060
   - BIO_070
-  # - BIO_080
-  # - BIO_090
-  # - BIO_100
-  # - BIO_125
-  # - BIO_150
-  # - BIO_175
-  # - BIO_200
-  # - BIO_225
-  # - BIO_250
-  # - BIO_275
-  # - BIO_300
+  - BIO_080
+  - BIO_090
+  - BIO_100
+  - BIO_125
+  - BIO_150
+  - BIO_175
+  - BIO_200
+  - BIO_225
+  - BIO_250
+  - BIO_275
+  - BIO_300
   scenarios:
     enable: true
     # PyPSA-DE uses config/scenarios.automated.yaml to incorporate Ariadne project
@@ -80,7 +80,7 @@ clustering:
     # Sensitivity runs compare scenarios against each other, so throughput beats
     # intra-year detail. Must be a string ending in "h"/"seg"/"sn" — a bare
     # integer silently produces no snapshot weightings (scripts/time_aggregation.py).
-    resolution_sector: 365H
+    resolution_sector: 6H
 
 costs:
   use_list: true       # Whether to use the file custom_cost_fn or combine files from custom_cost_fn_list
@@ -268,6 +268,8 @@ pypsa_eur:
   StorageUnit: []
 
 solving:
+  mem_mb: 150000
+  runtime: "6h"  # 6h run -> 4h mean runtime and overhead
   options:
     custom_extra_functionality: "../scripts/pypsa-at/additional_functionality.py"
   # The default CO2 budget uses the KSG targets, and the non CO2 emissions from the REMIND model in the KN2045_Mix scenario
@@ -440,7 +442,7 @@ mods:
 
   # force country level yearly netted electricity autarky
   net_zero_electricity:
-    enable: true
+    enable: false
     fuels: ["gas", "H2", "solid biomass", "methanol"]  # green electricity production may be produced from these carriers
     h2_sources: ["AC", "low voltage", "solid biomass"]  # green hydrogen may be produced from these carriers
     AT: "2030"  # start year: constraints will be added from including this year onwards
