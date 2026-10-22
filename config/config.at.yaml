@@ -353,6 +353,13 @@ mods:
     add_biogas_to_power_plants_AT: true # add Austrian biogas-to-power plants from Anlagenregister
                                         # in addition to powerplantmatching
 
+  # Redistribute existing (base year) onshore wind capacities across regions
+  # according to powerplantmatching plant locations instead of upstream's
+  # distribution by technical potential. National IRENA totals per build year are kept.
+  relocate_existing_onwind:
+    enable: true
+    countries: [AT]
+
   tyndp_h2_import_scenario: "DE" # One of DE (Distributed Energy), NT (National Trends), GA (Global Ambition).
                            # Only used when H2 imports is enabled
 
