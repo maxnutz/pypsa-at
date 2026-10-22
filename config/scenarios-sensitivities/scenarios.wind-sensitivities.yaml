@@ -1,0 +1,213 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# Wind build-out restriction sensitivities for Austria.
+#
+# WIND_<k>_* caps total installed AT onshore wind (existing + new) at k x 4.0 GW,
+# the model's AT onwind capacity in the 2025 base year. The cap is applied via the
+# PyPSA-DE limits_capacity_max constraint for all myopic horizons; 2025 stays historic.
+# WIND_REF_* carries no cap.
+#
+# All scenarios drop the EAG 2030 wind volume target (17 TWh), which is infeasible
+# under low caps, so REF and capped runs differ only by the cap.
+#
+# *_aut keeps the national yearly net electricity autarky (mods.net_zero_electricity),
+# *_open disables it so that electricity imports can substitute domestic wind.
+
+WIND_REF_aut:
+  description: no AT onwind cap, net electricity autarky on
+  solving:
+    constraints:
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_100_aut:
+  description: AT onwind <= 1.0 x 4.0 GW = 4.0 GW, net electricity autarky on
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 4.0
+              2040: 4.0
+              2050: 4.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_150_aut:
+  description: AT onwind <= 1.5 x 4.0 GW = 6.0 GW, net electricity autarky on
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 6.0
+              2040: 6.0
+              2050: 6.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_200_aut:
+  description: AT onwind <= 2.0 x 4.0 GW = 8.0 GW, net electricity autarky on
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 8.0
+              2040: 8.0
+              2050: 8.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_250_aut:
+  description: AT onwind <= 2.5 x 4.0 GW = 10.0 GW, net electricity autarky on
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 10.0
+              2040: 10.0
+              2050: 10.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_300_aut:
+  description: AT onwind <= 3.0 x 4.0 GW = 12.0 GW, net electricity autarky on
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 12.0
+              2040: 12.0
+              2050: 12.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+
+WIND_REF_open:
+  description: no AT onwind cap, net electricity autarky off
+  solving:
+    constraints:
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false
+
+WIND_100_open:
+  description: AT onwind <= 1.0 x 4.0 GW = 4.0 GW, net electricity autarky off
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 4.0
+              2040: 4.0
+              2050: 4.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false
+
+WIND_150_open:
+  description: AT onwind <= 1.5 x 4.0 GW = 6.0 GW, net electricity autarky off
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 6.0
+              2040: 6.0
+              2050: 6.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false
+
+WIND_200_open:
+  description: AT onwind <= 2.0 x 4.0 GW = 8.0 GW, net electricity autarky off
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 8.0
+              2040: 8.0
+              2050: 8.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false
+
+WIND_250_open:
+  description: AT onwind <= 2.5 x 4.0 GW = 10.0 GW, net electricity autarky off
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 10.0
+              2040: 10.0
+              2050: 10.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false
+
+WIND_300_open:
+  description: AT onwind <= 3.0 x 4.0 GW = 12.0 GW, net electricity autarky off
+  solving:
+    constraints:
+      limits_capacity_max:
+        Generator:
+          onwind:
+            AT:
+              2030: 12.0
+              2040: 12.0
+              2050: 12.0
+      limits_volume_min:
+        wind:
+          AT:
+            2030: 0
+  mods:
+    net_zero_electricity:
+      enable: false

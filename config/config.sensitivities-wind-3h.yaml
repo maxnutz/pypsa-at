@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# 3-hourly variant of the wind build-out sensitivities. Pass after the base overlay:
+#   pixi run snakemake -call \
+#     --configfile config/config.sensitivities-wind.yaml config/config.sensitivities-wind-3h.yaml
+# A separate prefix keeps 3H results apart from the 365H runs.
+
+run:
+  prefix: wind-buildout-sensitivities-3h
+
+clustering:
+  temporal:
+    resolution_sector: 3H

@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# Wind build-out restriction sensitivities for Austria.
+# Overlay on top of the default configuration stack (config.at.yaml), pass via:
+#   pixi run snakemake -call --configfile config/config.sensitivities-wind.yaml
+# Scenario definitions: config/scenarios-sensitivities/scenarios.wind-sensitivities.yaml
+
+run:
+  prefix: wind-buildout-sensitivities
+  name:
+  - WIND_REF_aut
+  - WIND_100_aut
+  - WIND_150_aut
+  - WIND_200_aut
+  - WIND_250_aut
+  - WIND_300_aut
+  - WIND_REF_open
+  - WIND_100_open
+  - WIND_150_open
+  - WIND_200_open
+  - WIND_250_open
+  - WIND_300_open
+  scenarios:
+    enable: true
+    file: config/scenarios-sensitivities/scenarios.wind-sensitivities.yaml
+
+clustering:
+  temporal:
+    resolution_sector: 365H
