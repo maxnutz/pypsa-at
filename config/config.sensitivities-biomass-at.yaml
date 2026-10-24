@@ -266,6 +266,8 @@ pypsa_eur:
   StorageUnit: []
 
 solving:
+  mem_mb: 150000 # backed by benchmark from biomass-runs
+  runtime: "4h" # backed by benchmark from biomass-runs
   options:
     custom_extra_functionality: "../scripts/pypsa-at/additional_functionality.py"
   # The default CO2 budget uses the KSG targets, and the non CO2 emissions from the REMIND model in the KN2045_Mix scenario
