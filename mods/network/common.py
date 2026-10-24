@@ -28,6 +28,7 @@ from mods.network.h2 import (
 )
 from mods.network.hydro import process_hydro
 from mods.network.potentials import apply_klien_potential_limits
+from mods.network.renewables import relocate_existing_onwind
 from mods.network.trajectories import apply_pemmdb_trajectories
 
 logger = getLogger(__name__)
@@ -99,6 +100,7 @@ def modify_prenetwork(n: pypsa.Network, snakemake: Snakemake) -> None:
     block_russian_gas_imports(n, snakemake)
     make_gas_pipelines_unextendable(n, snakemake)
 
+    relocate_existing_onwind(n, snakemake)
     apply_pemmdb_trajectories(n, snakemake, costs)
     override_gas_storage_capacities(n, snakemake)
     apply_klien_potential_limits(n, snakemake)

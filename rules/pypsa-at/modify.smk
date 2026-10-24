@@ -216,6 +216,7 @@ use rule modify_prenetwork as modify_prenetwork_at with:
         nuts3_buildings=f"{KLIEN_POTENTIALS['folder']}/nuts3_pv_buildings.csv",
         nuts3_ground=f"{KLIEN_POTENTIALS['folder']}/nuts3_pv_ground.csv",
         nuts3_wind=f"{KLIEN_POTENTIALS['folder']}/nuts3_wind.csv",
+        powerplants_at=resources("powerplants_s_{clusters}-overwrite.csv"),
         gas_input_nodes_simplified=resources(
             "gas_input_locations_s_{clusters}_simplified.csv"
         ),
@@ -258,6 +259,7 @@ use rule modify_prenetwork as modify_prenetwork_at with:
             "mods", "klien_potential_limits", "ambition"
         ),
         block_russian_gas_imports=config_provider("mods", "block_russian_gas_imports"),
+        relocate_existing_onwind=config_provider("mods", "relocate_existing_onwind"),
         sector=config_provider("sector"),
         admin_levels=config_provider("clustering", "administrative"),
         custom_clustering=config_provider("mods", "modify_nuts3_shapes"),
