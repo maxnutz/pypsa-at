@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# Minimal PyPSA-AT model for sensitivity analyses. Overlays the default stack
+# (config.at.yaml) and keeps every model setting of main except the ones below,
+# so that one planning horizon solves in about two minutes.
+#
+#   pixi run snakemake all_at -call --configfile=config/config.sensitivities.yaml
+#
+# Sensitivity branches add their scenarios to run.name and point
+# run.scenarios.file to their own scenarios file.
+
+run:
+  prefix: main-sensitivities
+  name:
+  - AT_KN2040
+  scenarios:
+    enable: true
+    file: config/scenarios.manual.yaml
+  # shared_resources stays at main's `policy: false`: with `base`, shared files
+  # land in the resources/ root across all prefixes, and several AT rules
+  # combine per-horizon inputs into un-wildcarded outputs that cannot be shared.
+
+clustering:
+  administrative:
+    AT: 2 # 10 regions (NUTS 2) instead of 35 (NUTS 3) - the main driver of solving time
+  temporal:
+    averaging: 365h # 24 snapshots per year, same as main
+
+mods:
+  modify_nuts3_shapes: AT10DE5 # must match clustering.administrative.AT: 2
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-default
+  # peak memory of comparable runs stays below 3 GB
+  mem_mb: 8000
+  runtime: 1h

@@ -53,7 +53,11 @@ update-dags = """
 
 evals = "PYTHONPATH='./' python evals/cli.py run-eval"
 
+solve-benchmarks = "PYTHONPATH='./' python evals/solve_benchmarks.py"
+
 workflow = "snakemake all_at -call"
+
+workflow-sensitivities = "snakemake all_at -call --configfile=config/config.sensitivities.yaml"
 
 sync-locks = """
     echo "Skipping task because PyPSA-AT does not support conda."

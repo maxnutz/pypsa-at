@@ -8,6 +8,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Planned]
 
 ### Added
+- Minimal model for sensitivity analyses (`config/config.sensitivities.yaml`, `pixi run workflow-sensitivities`): Austria at NUTS2 (AT10) and Gurobi; one planning horizon solves in about one minute
+- `pixi run solve-benchmarks` collects the solving times of finished runs into a CSV history
 - Scenarios can use different custom clusterings (`mods.modify_nuts3_shapes`, `clustering.administrative`) in one workflow: the KLIEN-weighted onwind profiles apply per run when Austria is clustered at NUTS2, and the clustering config reaches the scripts as rule params
 - CO2 pipelines carry dense-phase CO2 (`sector.co2_network_liquefaction: true`): compression costs and electricity (0.1051 MWh/t) are counted. The cost entry `CO2 dense phase compression` comes from technology-data v0.15.0 (AIT CO2Netz study), converted to EUR2020 in `data/custom_costs.csv` until technology-data is bumped
 - `patch_powerplants_set_at` rule restoring `Set="PP"` on the large German lignite condensing units

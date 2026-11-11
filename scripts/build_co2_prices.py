@@ -24,7 +24,13 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    df = pd.read_csv(snakemake.input["csv"], parse_dates=True, index_col=0)["price"]
+    # --- START: Block Maintained by PyPSA-AT ---
+    # The Instrat API (unversioned) now returns `price` as the first column, so
+    # `index_col=0` turned the prices into the index. Select the columns by name.
+    df = pd.read_csv(snakemake.input["csv"], parse_dates=["date"], index_col="date")[
+        "price"
+    ]
+    # --- END: Block Maintained by PyPSA-AT ---
 
     rolling_window = snakemake.params["rolling_window"]
 
