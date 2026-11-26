@@ -286,7 +286,7 @@ def separate_basic_chemicals(demand, year):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
-    # ammonia data from 2019-2023
+    # ammonia data from 2018-2022
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
@@ -296,12 +296,13 @@ def separate_basic_chemicals(demand, year):
 
     demand["Ammonia"] = 0.0
 
-    # --- START: Block Maintained by PyPSA-AT ---
+    # --- START: Block Maintained by Infra-Ensure ---
     # Upstream clamps to 2018-2022, but the retrieved USGS file holds 2019-2023,
     # so reference years before 2019 raise a KeyError. Clamp to the years in the file.
+    # Needed by the industry-history workflow; candidate for PyPSA-Eur.
     available_years = ammonia.columns.astype(int)
     year_to_use = min(max(year, available_years.min()), available_years.max())
-    # --- END: Block Maintained by PyPSA-AT ---
+    # --- END: Block Maintained by Infra-Ensure ---
     if year_to_use != year:
         logger.info(
             f"Year {year} outside data range. Using data from {year_to_use} for ammonia production."

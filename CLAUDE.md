@@ -6,6 +6,23 @@ Grid Management AG).
 **Upstream lineage:** PyPSA-Eur → PyPSA-DE → **PyPSA-AT** (this repo)
 **Workflow engine:** Snakemake | **Package manager:** Pixi | **Python ≥ 3.12**
 
+<!-- --- START: Block Maintained by Infra-Ensure --- -->
+## Infra-Ensure Fork
+
+This repository is a soft-fork of PyPSA-AT for the Infra-Ensure project.
+In this fork PyPSA-AT files count as upstream as well:
+
+- New code goes to the Infra-Ensure folders: `infra_ensure/` (Python package),
+  `scripts/infra-ensure/`, `rules/infra-ensure/`, `config/infra-ensure/`,
+  `test/test_infra_ensure/`, `docs-at/infra-ensure/`, `CHANGELOG.infra-ensure.md`
+- Changes to any other file are touch points: register them in
+  `infra_ensure/touchpoints.yaml` and wrap them in
+  `--- START/END: Block Maintained by Infra-Ensure ---` markers
+- `pixi run check-at-compat` checks both against `upstream/main` (AGGM-AG/pypsa-at)
+- Changelog entries go to `CHANGELOG.infra-ensure.md`, not `CHANGELOG.AT.md`
+- Details: `docs-at/infra-ensure/index.md`
+<!-- --- END: Block Maintained by Infra-Ensure --- -->
+
 ## Where to Work
 
 **AT-owned files — edit freely:**

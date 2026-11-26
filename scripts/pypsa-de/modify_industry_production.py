@@ -14,8 +14,11 @@ This includes
 """
 
 import logging
+
+# --- START: Block Maintained by Infra-Ensure ---
 import sys
 
+# --- END: Block Maintained by Infra-Ensure ---
 import pandas as pd
 
 from scripts._helpers import (
@@ -76,9 +79,9 @@ if __name__ == "__main__":
             ]
             .multiply(1000)
         )
-        # --- START: Block Maintained by PyPSA-AT ---
+        # --- START: Block Maintained by Infra-Ensure ---
         # The Ariadne database starts in 2025. Historical reference years (see
-        # config/config.industry-history.yaml) have no FORECAST values, so the
+        # config/infra-ensure/config.industry-history.yaml) have no FORECAST values, so the
         # production is passed through unchanged instead of raising a KeyError.
         if year not in ariadne.columns:
             logger.warning(
@@ -89,7 +92,7 @@ if __name__ == "__main__":
                 snakemake.output.industrial_production_per_country_tomorrow
             )
             sys.exit(0)
-        # --- END: Block Maintained by PyPSA-AT ---
+        # --- END: Block Maintained by Infra-Ensure ---
 
     logger.info(f"German industry demand {year} before modification")
     logger.info(

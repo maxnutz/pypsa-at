@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 Infra-Ensure contributors
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# Registry of every place where this fork differs from PyPSA-AT (AGGM-AG/pypsa-at).
+# `pixi run check-at-compat` compares the fork with upstream/main and fails on any
+# change that is neither in an owned path nor registered here.
+#
+# owned_paths: Infra-Ensure files. Edit freely; no markers needed.
+# touchpoints: files owned by PyPSA-AT (or PyPSA-DE / PyPSA-Eur) that Infra-Ensure
+#   has to change.
+#   path:     file relative to the repository root
+#   reason:   why the change is needed
+#   markers:  true (default): every changed line lies inside
+#               --- START: Block Maintained by Infra-Ensure ---
+#               --- END: Block Maintained by Infra-Ensure ---
+#             false: whole-file change, only for files without comments
+#   upstream: where the change should go eventually:
+#             none (fork only), pypsa-at, pypsa-de or pypsa-eur
+
+owned_paths:
+- infra_ensure/**
+- scripts/infra-ensure/**
+- rules/infra-ensure/**
+- config/infra-ensure/**
+- test/test_infra_ensure/**
+- docs-at/infra-ensure/**
+- CHANGELOG.infra-ensure.md
+
+touchpoints:
+- path: Snakefile
+  reason: Include the Infra-Ensure rules after the PyPSA-AT rules
+  upstream: none
+- path: pixi.toml
+  reason: Infra-Ensure tasks (industry-history, check-at-compat)
+  upstream: none
+- path: mkdocs.yml
+  reason: Infra-Ensure section in the documentation navigation
+  upstream: none
+- path: .gitignore
+  reason: Ignore local helper scripts of the fork
+  upstream: none
+- path: CLAUDE.md
+  reason: Point coding agents to the Infra-Ensure rules of this fork
+  upstream: none
+- path: scripts/build_industrial_production_per_country.py
+  reason: Clamp the ammonia year to the years in the USGS file (KeyError for reference years before 2019)
+  upstream: pypsa-eur
+- path: scripts/pypsa-de/modify_industry_production.py
+  reason: Pass industry production through for years without Ariadne FORECAST data
+  upstream: pypsa-de

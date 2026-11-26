@@ -5,7 +5,7 @@
 
 # Industry-history mini-workflow. Overlays the default stack (config.at.yaml)
 # and builds the industrial production per country for every historical year
-# in config/scenarios.industry-history.yaml (one scenario per year, setting
+# in config/infra-ensure/scenarios.industry-history.yaml (one scenario per year, setting
 # industry.reference_year). Nothing is solved.
 #
 #   pixi run industry-history
@@ -22,6 +22,6 @@ run:
   name: all # every scenario in the scenarios file below
   scenarios:
     enable: true
-    file: config/scenarios.industry-history.yaml
+    file: config/infra-ensure/scenarios.industry-history.yaml
   shared_resources:
     policy: false # reference_year differs per scenario, nothing can be shared
