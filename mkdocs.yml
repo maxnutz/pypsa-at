@@ -13,11 +13,18 @@ nav:
   - Working with Evaluations: how-to-guides/evals.md
   - Production Targets: how-to-guides/production-targets.md
   - Anlagenregister: how-to-guides/anlagenregister.md
-  - Historical Industry Production: how-to-guides/industry-history.md
 - Tutorials:
   - tutorials/index.md
   - tutorials/model-modifications.md
 - Data Sources: data_sources.md
+# --- START: Block Maintained by Infra-Ensure ---
+# Registered in infra_ensure/touchpoints.yaml.
+- Infra-Ensure:
+  - infra-ensure/index.md
+  - Specification: infra-ensure/specification/index.md
+  - How-to-Guides:
+    - Historical Industry Production: infra-ensure/how-to-guides/industry-history.md
+# --- END: Block Maintained by Infra-Ensure ---
 - Function Reference:
   - Modifications:
     - reference/mods/index.md

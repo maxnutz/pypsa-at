@@ -9,9 +9,9 @@ solved.
 pixi run industry-history
 ```
 
-The task runs `snakemake industry_history_at` with the overlay
-`config/config.industry-history.yaml`. The overlay defines one scenario per
-year in `config/scenarios.industry-history.yaml`. Each scenario sets
+The task runs `snakemake industry_history` with the overlay
+`config/infra-ensure/config.industry-history.yaml`. The overlay defines one scenario per
+year in `config/infra-ensure/scenarios.industry-history.yaml`. Each scenario sets
 `industry.reference_year`. A run takes about 8 minutes when the input data has
 already been retrieved.
 
@@ -62,8 +62,8 @@ the year. They are built once per folder because `shared_resources.policy` is
     - Reference years up to 2018 fail with a `KeyError` (there is no 2018 column).
     - Reference year 2023 silently uses the 2022 values.
 
-    PyPSA-AT fixes it with a PyPSA-AT block in the upstream script. The block
+    Infra-Ensure fixes it with an Infra-Ensure block in the upstream script (see `infra_ensure/touchpoints.yaml`). The block
     clamps to the years in the file. The fix should also go to PyPSA-Eur.
 
 To add a year, add a scenario `IND{year}` to
-`config/scenarios.industry-history.yaml`.
+`config/infra-ensure/scenarios.industry-history.yaml`.

@@ -123,3 +123,7 @@ doc/img/intro-workflow.svg
 .marimo/*
 __marimo__/
 public
+# --- START: Block Maintained by Infra-Ensure ---
+# Local helper scripts of the Infra-Ensure fork
+plot_model_regions.py
+# --- END: Block Maintained by Infra-Ensure ---

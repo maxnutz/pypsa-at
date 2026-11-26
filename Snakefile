@@ -232,6 +232,13 @@ include: "rules/pypsa-at/build_sector.smk"  # PyPSA-AT sector build rules and ov
 include: "rules/pypsa-at/compose.smk"  # PyPSA-AT inputs and params for compose_network
 include: "rules/pypsa-at/solve.smk"  # PyPSA-AT specific solve rule extensions
 include: "rules/pypsa-at/collect.smk"  # PyPSA-AT specific collect rules
+# --- START: Block Maintained by Infra-Ensure ---
+# Infra-Ensure rules extend PyPSA-AT and are included after it.
+# Registered in infra_ensure/touchpoints.yaml.
+include: "rules/infra-ensure/collect.smk"  # Infra-Ensure collect rules
+
+
+# --- END: Block Maintained by Infra-Ensure ---
 
 
 rule all:

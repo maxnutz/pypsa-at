@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # For license information, see the LICENSE.txt file in the project root.
 
-# One scenario per historical year for config/config.industry-history.yaml.
+# One scenario per historical year for config/infra-ensure/config.industry-history.yaml.
 # The last year is 2023: JRC-IDEES 2023-v1 and the Swiss BFE data end there.
 # The year is also used as {horizon} of the output file name, so the
 # steel/aluminium/HVC fractions of industry.* are taken for that year

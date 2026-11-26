@@ -11,7 +11,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Scenarios can use different custom clusterings (`mods.modify_nuts3_shapes`, `clustering.administrative`) in one workflow: the KLIEN-weighted onwind profiles apply per run when Austria is clustered at NUTS2, and the clustering config reaches the scripts as rule params
 - CO2 pipelines carry dense-phase CO2 (`sector.co2_network_liquefaction: true`): compression costs and electricity (0.1051 MWh/t) are counted. The cost entry `CO2 dense phase compression` comes from technology-data v0.15.0 (AIT CO2Netz study), converted to EUR2020 in `data/custom_costs.csv` until technology-data is bumped
 - `patch_powerplants_set_at` rule restoring `Set="PP"` on the large German lignite condensing units
-- Industry-history mini-workflow (`pixi run industry-history`) building the industrial production per country for every year from 2014 to 2023 (`config/config.industry-history.yaml`)
 
 ### Fixed
 - Retrofitted H2 pipelines no longer double-count Austrian gas pipeline capacity: from 2030 up to the threshold year, gas plus retrofitted H2 capacity per corridor stays at the AGGM target ([#294](https://github.com/AGGM-AG/pypsa-at-planning/issues/294))
