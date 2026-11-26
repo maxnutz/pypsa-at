@@ -63,3 +63,21 @@ It fails if
 Blank-line-only changes are ignored. Only tracked files are checked, so `git add`
 new files before running the guard. Registered files that no longer differ from PyPSA-AT are reported as warnings.
 The guard needs the `upstream` remote: `git remote add upstream https://github.com/AGGM-AG/pypsa-at.git`.
+
+## CI on the fork
+
+The workflow files in `.github/workflows/` stay identical to PyPSA-AT. Workflows
+that need AGGM infrastructure are disabled in the GitHub settings of the fork
+(Actions → workflow → *Disable workflow*), not by editing the files:
+
+| Workflow           | State    | Reason                                                       |
+|--------------------|----------|--------------------------------------------------------------|
+| Test               | active   | unit and integration tests (`config/test/config.at10.yaml`)  |
+| CodeQL             | active   |                                                              |
+| zizmor             | active   |                                                              |
+| Security scan      | active   |                                                              |
+| Link Check         | active   | weekly                                                       |
+| Validator Bot      | disabled | needs the AGGM self-hosted runner and `VALIDATOR_KEY`        |
+| Push images        | disabled | pushes the AGGM image `aggm-ag/at-dev-env`                    |
+| Release            | disabled | needs the PyPSA bot app                                      |
+| Update locked envs | disabled | lockfiles come with the merges from `upstream/main`          |
