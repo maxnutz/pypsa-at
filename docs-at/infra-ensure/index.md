@@ -76,8 +76,8 @@ that need AGGM infrastructure are disabled in the GitHub settings of the fork
 | CodeQL             | active   |                                                              |
 | zizmor             | active   |                                                              |
 | Security scan      | active   |                                                              |
-| Link Check         | active   | weekly                                                       |
 | Validator Bot      | disabled | needs the AGGM self-hosted runner and `VALIDATOR_KEY`        |
 | Push images        | disabled | pushes the AGGM image `aggm-ag/at-dev-env`                    |
 | Release            | disabled | needs the PyPSA bot app                                      |
 | Update locked envs | disabled | lockfiles come with the merges from `upstream/main`          |
+| Link Check         | disabled | fails on link rot in PyPSA-Eur/DE/AT files and on links to the private AGGM planning repo; enable it temporarily to run it by hand |
