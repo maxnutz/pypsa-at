@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# One scenario per historical year for config/config.industry-history.yaml.
+# The last year is 2023: JRC-IDEES 2023-v1 and the Swiss BFE data end there.
+# The year is also used as {horizon} of the output file name, so the
+# steel/aluminium/HVC fractions of industry.* are taken for that year
+# (years before 2020 fall back to the 2020 values).
+
+IND2014:
+  industry:
+    reference_year: 2014
+
+IND2015:
+  industry:
+    reference_year: 2015
+
+IND2016:
+  industry:
+    reference_year: 2016
+
+IND2017:
+  industry:
+    reference_year: 2017
+
+IND2018:
+  industry:
+    reference_year: 2018
+
+IND2019:
+  industry:
+    reference_year: 2019
+
+IND2020:
+  industry:
+    reference_year: 2020
+
+IND2021:
+  industry:
+    reference_year: 2021
+
+IND2022:
+  industry:
+    reference_year: 2022
+
+IND2023:
+  industry:
+    reference_year: 2023
