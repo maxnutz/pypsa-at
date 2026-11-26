@@ -55,6 +55,8 @@ evals = "PYTHONPATH='./' python evals/cli.py run-eval"
 
 workflow = "snakemake all_at -call"
 
+industry-history = "snakemake industry_history_at -call --configfile=config/config.industry-history.yaml"
+
 sync-locks = """
     echo "Skipping task because PyPSA-AT does not support conda."
 """

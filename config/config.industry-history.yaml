@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2023-2026 Austrian Gas Grid Management AG
+#
+# SPDX-License-Identifier: MIT
+# For license information, see the LICENSE.txt file in the project root.
+
+# Industry-history mini-workflow. Overlays the default stack (config.at.yaml)
+# and builds the industrial production per country for every historical year
+# in config/scenarios.industry-history.yaml (one scenario per year, setting
+# industry.reference_year). Nothing is solved.
+#
+#   pixi run industry-history
+#
+# Outputs per year land in resources/industry-history/IND{year}/:
+#   industrial_production_per_country.csv
+#   industrial_production_per_country_tomorrow_{year}-modified.csv
+
+run:
+  prefix: industry-history
+  name: all # every scenario in the scenarios file below
+  scenarios:
+    enable: true
+    file: config/scenarios.industry-history.yaml
+  shared_resources:
+    policy: false # reference_year differs per scenario, nothing can be shared
