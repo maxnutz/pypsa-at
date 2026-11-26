@@ -58,6 +58,7 @@ workflow = "snakemake all_at -call"
 # --- START: Block Maintained by Infra-Ensure ---
 # Infra-Ensure tasks. Registered in infra_ensure/touchpoints.yaml.
 industry-history = "snakemake industry_history -call --configfile=config/infra-ensure/config.industry-history.yaml"
+check-at-compat = "python -m infra_ensure.compat"
 # --- END: Block Maintained by Infra-Ensure ---
 
 sync-locks = """
