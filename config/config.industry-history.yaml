@@ -11,7 +11,10 @@
 #   pixi run industry-history
 #
 # Outputs per year land in resources/industry-history/IND{year}/:
+#   ammonia_production.csv
+#   eurostat_energy_balances.csv
 #   industrial_production_per_country.csv
+#   industrial_production_per_country_tomorrow_{year}.csv
 #   industrial_production_per_country_tomorrow_{year}-modified.csv
 
 run:

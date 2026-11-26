@@ -19,10 +19,17 @@ already been retrieved.
 
 One folder per year in `resources/industry-history/IND{year}/`:
 
-| File                                                     | Content                                                                                                                                    |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `industrial_production_per_country.csv`                  | Historical production from JRC-IDEES. For non-EU countries it is scaled by Eurostat energy balances. Real split between electric arc and blast furnace steel |
-| `industrial_production_per_country_tomorrow_{year}-modified.csv` | The same production after `build_industrial_production_per_country_tomorrow` and `modify_industry_production` |
+| File                                                             | Content                                                                                                                                                      |
+|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ammonia_production.csv`                                         | Ammonia production per country from USGS (ktNH3/a, 2019–2023)                                                                                                |
+| `eurostat_energy_balances.csv`                                   | Eurostat energy balances for all years and countries (about 380 MB per year folder)                                                                          |
+| `industrial_production_per_country.csv`                          | Historical production from JRC-IDEES. For non-EU countries it is scaled by Eurostat energy balances. Real split between electric arc and blast furnace steel |
+| `industrial_production_per_country_tomorrow_{year}.csv`          | The production after `build_industrial_production_per_country_tomorrow`                                                                                      |
+| `industrial_production_per_country_tomorrow_{year}-modified.csv` | The same production after `modify_industry_production`                                                                                                       |
+
+`eurostat_energy_balances.csv` and `ammonia_production.csv` do not depend on
+the year. They are built once per folder because `shared_resources.policy` is
+`false`.
 
 ## What the processing steps do
 
@@ -44,6 +51,19 @@ One folder per year in `resources/industry-history/IND{year}/`:
   on their own.
 - **Ammonia production** (USGS) covers 2019–2023. Earlier years use the 2019
   values.
+
+!!! warning "Upstream bug in the ammonia year range"
+    `separate_basic_chemicals` in `scripts/build_industrial_production_per_country.py`
+    clamps the reference year to 2018–2022. That range is hardcoded. It belongs to
+    the older USGS file. The retrieved dataset (`nitrogen_statistics` 2023 in
+    `data/versions.csv`) holds 2019–2023. The bug comes from PyPSA-Eur and is
+    still there upstream. Without a fix:
+
+    - Reference years up to 2018 fail with a `KeyError` (there is no 2018 column).
+    - Reference year 2023 silently uses the 2022 values.
+
+    PyPSA-AT fixes it with a PyPSA-AT block in the upstream script. The block
+    clamps to the years in the file. The fix should also go to PyPSA-Eur.
 
 To add a year, add a scenario `IND{year}` to
 `config/scenarios.industry-history.yaml`.

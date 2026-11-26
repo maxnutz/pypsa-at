@@ -80,10 +80,14 @@ def industry_history_inputs(w):
         if year is None:
             continue
         files += [
-            resources("industrial_production_per_country.csv").format(run=name),
-            resources(
-                f"industrial_production_per_country_tomorrow_{year}-modified.csv"
-            ).format(run=name),
+            resources(f).format(run=name)
+            for f in [
+                "ammonia_production.csv",
+                "eurostat_energy_balances.csv",
+                "industrial_production_per_country.csv",
+                f"industrial_production_per_country_tomorrow_{year}.csv",
+                f"industrial_production_per_country_tomorrow_{year}-modified.csv",
+            ]
         ]
     return files
 
